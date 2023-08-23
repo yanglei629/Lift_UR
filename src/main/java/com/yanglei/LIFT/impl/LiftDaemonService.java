@@ -27,8 +27,7 @@ public class LiftDaemonService implements DaemonService {
     @Override
     public URL getExecutable() {
         try {
-            //return new URL("file:daemonEnv/daemon.sh");
-            return new URL("file:/daemon/main.py");
+            return new URL("file:/daemon/liftingColumn.py");
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return null;
