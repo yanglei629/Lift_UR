@@ -29,8 +29,10 @@ public class LiftImpl implements ILift{
 
     @Override
     public boolean connect(String ip, Integer port, Integer slaveId) {
-        ArrayList<String> args = new ArrayList<String>();
+        ArrayList<Object> args = new ArrayList<Object>();
         args.add(ip);
+        args.add(port);
+        args.add(1);
         Object result = null;
         try {
             result = client.execute("connect", args);
@@ -62,7 +64,15 @@ public class LiftImpl implements ILift{
 
     @Override
     public boolean getConnectionStatus() {
-        return false;
+        ArrayList<String> args = new ArrayList<String>();
+        Object result = null;
+        try {
+            result = client.execute("getConnectionStatus", args);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return (Boolean) result;
     }
 
     @Override
@@ -71,9 +81,6 @@ public class LiftImpl implements ILift{
         Object result = null;
         try {
             result = client.execute("setVisualLimit", args);
-        } catch (XmlRpcException e) {
-            e.printStackTrace();
-            return false;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -106,10 +113,7 @@ public class LiftImpl implements ILift{
         Object result = null;
         try {
             result = client.execute("jogUp", args);
-        } catch (XmlRpcException e) {
-            e.printStackTrace();
-            return false;
-        } catch (Exception e) {
+        }  catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -123,9 +127,6 @@ public class LiftImpl implements ILift{
         Object result = null;
         try {
             result = client.execute("jogDown", args);
-        } catch (XmlRpcException e) {
-            e.printStackTrace();
-            return false;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -163,6 +164,32 @@ public class LiftImpl implements ILift{
             return false;
         }
         return (Boolean) result;
+    }
+
+    @Override
+    public ArrayList<Integer> getLiftingInfo() {
+        ArrayList<Boolean> args = new ArrayList<Boolean>();
+        Object result = null;
+        try {
+            result = client.execute("getLiftingInfo", args);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
+
+    @Override
+    public ArrayList<Integer> getServoInfo() {
+        ArrayList<Boolean> args = new ArrayList<Boolean>();
+        Object result = null;
+        try {
+            result = client.execute("getServoInfo", args);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
     }
 
     @Override

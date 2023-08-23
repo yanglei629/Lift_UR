@@ -1,6 +1,8 @@
 package com.yanglei.LIFT.impl.program;
 
+import java.util.ArrayList;
 import java.util.Timer;
+import java.util.TimerTask;
 
 import com.yanglei.LIFT.impl.i18n.LanguagePack;
 import com.yanglei.LIFT.impl.i18n.TextResource;
@@ -36,6 +38,7 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
 
     private final LiftProgramNodeView view;
     private final DataModel model;
+    private Timer timer;
 
     public KeyboardInputFactory getKeyboardFactory() {
         return keyboardFactory;
@@ -44,8 +47,6 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
     private final KeyboardInputFactory keyboardFactory;
     private final InputValidationFactory keyboardInputValidationFactory;
     private Timer uiTimer;        //UI updates from non-GUI threads must use EventQueue.invokeLater (or SwingUtilities.invokeLater)
-    private boolean isViewOpen = false;
-
     private final LanguagePack languagePack;
 
     public LiftProgramNodeContribution(ProgramAPIProvider apiProvider, LiftProgramNodeView view, DataModel model) {
@@ -75,57 +76,38 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
 
     @Override
     public void openView() {
-        /*//international
-        view.setArgumentText(getTextResource().argument());
-        view.setStatusText(getTextResource().status());
-        view.setTargetPos(getTextResource().targetPos() + ":");
-
-        view.setPerformBtn(getTextResource().perform());
-
-        view.setTargetPosLabel(getTextResource().targetPos() + ":");
-
-        view.setCurrentPosLabel(getTextResource().currentPos() + ":");
-
-        view.setMovingStatus(getTextResource().status() + ":");
-
-        view.setConnectionStatus(getTextResource().connectionStatus() + ":");
-
-        view.setAutoConnection(getTextResource().autoActivation());
-
-        view.setStopBtn(getTextResource().stop());
-
-        //refresh status
-        view.showPos(getPos());
-        view.showAutoActivate(getInstalltion().getAutoActivation());
-
-
-        isViewOpen = true;
-        //refresh status
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (isViewOpen) {
-                    updateUI();
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        }).start();*/
+        view.reDefineComponent();
         view.showPos(getPos());
         view.showSpeed(getSpeed());
+
+        if (this.timer ==null) {
+            this.timer = new Timer();
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    boolean connectionStatus = getInstallation().getConnectionStatus();
+                    if (connectionStatus) {
+                        ArrayList<Integer> liftingInfo = getInstallation().getLiftingInfo();
+
+                        Integer height = liftingInfo.get(0);
+                        Integer speed = liftingInfo.get(1);
+                        Integer status = liftingInfo.get(2);
+                        view.refreshState(true, height, speed, status);
+                    } else {
+                        view.refreshState(false, 0, 0, 0);
+                    }
+                }
+            }, 0, 2000);
+        }
     }
 
 
     @Override
     public void closeView() {
-        if (uiTimer != null) {
-            uiTimer.cancel();
+        if (this.timer!=null){
+            this.timer.cancel();
+            this.timer = null;
         }
-
-        isViewOpen = false;
     }
 
     @Override
@@ -142,10 +124,10 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
     @Override
     public void generateScript(ScriptWriter scriptWriter) {
         //build rpc client
-        scriptWriter.appendLine("BY_lift=rpc_factory(\"xmlrpc\",\"http://127.0.0.1:10000/\")");
-        scriptWriter.appendLine(String.format("BY_lift.move($1%s, $2%s)",getPos(),getSpeed()));
+        scriptWriter.appendLine("lift=rpc_factory(\"xmlrpc\",\"http://127.0.0.1:9120/\")");
+        scriptWriter.appendLine(String.format("lift.move($1%s, $2%s)",getPos(),getSpeed()));
 
-        scriptWriter.appendLine("while BY_lift.currenHeight() != " + getPos() + ":");
+        scriptWriter.appendLine("while lift.currenHeight() != " + getPos() + ":");
         scriptWriter.appendLine("    sleep(1)");
         scriptWriter.appendLine("end");
     }
@@ -163,57 +145,8 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
         });
     }
 
-    public int getTargetPos() {
-        int returnValue = getInstallation().getLiftInstance().currentHeight();
-        return returnValue;
-    }
-
-    public int getCurrentPos() {
-        int returnValue = getInstallation().getLiftInstance().currentHeight();
-        return returnValue;
-    }
-
-
-    public int getMovingStatus() {
-        int returnValue = getInstallation().getLiftInstance().currentStatus();
-        return returnValue;
-    }
-
-    private void updateUI() {
-        System.out.println("refresh state........................");
-        int targetPos = getTargetPos();
-        view.setTargetPosLabel(getTextResource().targetPos() + ":" + targetPos + "mm");
-
-        int currentPos = getCurrentPos();
-        view.setCurrentPosLabel(getTextResource().currentPos() + ":" + currentPos + "mm");
-
-        int value = getMovingStatus();
-        if (value == 1) {
-            view.setMovingStatus(getTextResource().status() + ":" + getTextResource().moving());
-        }
-        if (value == 0) {
-            if (targetPos != currentPos) {
-                view.setMovingStatus(getTextResource().status() + ":" + getTextResource().unAchievable());
-            } else {
-                view.setMovingStatus(getTextResource().status() + ":" + getTextResource().stopped());
-            }
-        }
-
-        if (value == -1) {
-            view.setConnectionStatus(getTextResource().connectionStatus() + ":" + getTextResource().disconnected());
-        } else {
-            view.setConnectionStatus(getTextResource().connectionStatus() + ":" + getTextResource().connected());
-        }
-    }
-
     private LiftInstallationNodeContribution getInstallation() {
         return programAPI.getInstallationNode(LiftInstallationNodeContribution.class);
-    }
-
-    public KeyboardNumberInput<Integer> getInputPosForTextField() {
-        KeyboardNumberInput<Integer> keyboardInput = keyboardFactory.createIntegerKeypadInput();
-        keyboardInput.setInitialValue(getPos());
-        return keyboardInput;
     }
 
     public void setPos(Integer pos) {
@@ -232,7 +165,6 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
     }
 
     public void setSpeed(Integer value) {
-        // model.set("Speed", value);
         programAPI.getUndoRedoManager().recordChanges(()->{
             model.set("Speed", value);
         });
@@ -240,5 +172,9 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
 
     public void execute() {
         getInstalltion().getLiftInstance().move(getPos(),getSpeed());
+    }
+
+    public void stopLift() {
+        getInstalltion().stopLift();
     }
 }

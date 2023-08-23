@@ -16,6 +16,10 @@ import com.ur.urcap.api.domain.userinteraction.keyboard.KeyboardInputFactory;
 import scriptCommunicator.ScriptExporter;
 import scriptCommunicator.ScriptSender;
 
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class LiftInstallationNodeContribution implements InstallationNodeContribution {
 
     private static final String IP_KEY = "inputIP";
@@ -29,16 +33,14 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
 
     //communication scripter
     private final ScriptSender sender;
-    // Instance of ScriptExporter
-    // Used to extract values from URScript
+    // Instance of ScriptExporter, Used to extract values from URScript
     private final ScriptExporter exporter;
-    public static final int PORT = 10000;
+    public static final int PORT = 9120;
     private XmlRpcMyDaemonInterface xmlRpcDaemonInterface;
     private final LiftDaemonService daemonService;
 
     private final LanguagePack languagePack;
-    private boolean isViewOpen = false;
-    public boolean isConnected = false;
+    private Timer timer;
 
     public LiftInstallationNodeContribution(InstallationAPIProvider apiProvider, DataModel model, LiftInstallationNodeView view, LiftDaemonService daemonService) {
         this.apiProvider = apiProvider;
@@ -70,50 +72,30 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
 
     @Override
     public void openView() {
-        /*// i18n
-        view.setIpLabel(createIPString());
-        view.setConnectBtn(createConnectString());
-        view.setDisconnectBtn(createDisconnectString());
-        view.setConnectStatusLabel(getTextResource().No_Connection());
-        view.setControlModeLabel(getTextResource().controlMode() + ":");
-        view.setUpBtn(getTextResource().up());
-        view.setDownBtn(getTextResource().down());
-        view.setZeroCalibBtn(getTextResource().zeroCalibration());
-        view.setStopBtn(getTextResource().Stop());
-        view.setCancelStopBtn(getTextResource().CancelStop());
+        if (this.timer ==null){
+            this.timer = new Timer();
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    boolean connectionStatus = getConnectionStatus();
+                    if (connectionStatus){
+                        ArrayList<Integer> liftingInfo = getLiftingInfo();
+                        ArrayList<Integer> servoInfo = getServoInfo();
 
-        //lif status
-        view.setStatusText(getTextResource().status());
+                        Integer height = liftingInfo.get(0);
+                        Integer speed = liftingInfo.get(1);
+                        Integer status = liftingInfo.get(2);
 
-        view.setCurrentPosLabel(getTextResource().currentPos() + ":");
-
-        view.setMovingStatus(getTextResource().status() + ":");
-
-        view.showIP(getIP());
-
-        //monitor connection
-        isViewOpen = true;
-
-        *//*refreshConnectionState();
-        refreshMode();*//*
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (isViewOpen) {
-                    refreshConnectionState();
-                    if (isConnected) {
-                        refreshMode();
-                        updateUI();
-                    }
-
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                        Integer current = servoInfo.get(0);
+                        Integer temperature = servoInfo.get(1);
+                        Integer errorCode = servoInfo.get(2);
+                        view.refreshState(true, height,speed,status, current,temperature,errorCode);
+                    }else {
+                        view.refreshState(false, 0, 0, 0, 0, 0, 0);
                     }
                 }
-            }
-        }).start();*/
+            }, 0,2000);
+        }
 
         view.showIP(getIP());
         view.showPort(getPort());
@@ -121,63 +103,24 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
         view.showHighVirtualLimit(getHighVirtualLimit());
     }
 
-    //refresh connection state
-    private void refreshConnectionState() {
-        Integer current_pos = getXmlRpcMyDaemonInterface().get_current_pos();
-        Integer running_status = getXmlRpcMyDaemonInterface().get_running_status();
-        //if (current_pos == null || current_pos == -1) {
-        if (running_status == null || running_status == -1) {
-            view.setDisconnect(-1, null);
-            isConnected = false;
-        } else {
-            view.setConnected();
-            isConnected = true;
-        }
+    private ArrayList<Integer> getServoInfo() {
+        return lift.getServoInfo();
     }
 
-
-    //refresh lift data
-    private void updateUI() {
-        view.setCurrentPosLabel(getTextResource().currentPos() + ":" + getCurrentPos() + "mm");
-
-        int value = getMovingStatus();
-        if (value == 1) {
-            view.setMovingStatus(getTextResource().status() + ":" + getTextResource().moving());
-        } else {
-            view.setMovingStatus(getTextResource().status() + ":" + getTextResource().stopped());
-        }
+    public boolean getConnectionStatus() {
+        return lift.getConnectionStatus();
     }
 
-    public int getTargetPos() {
-        int returnValue = getLiftInstance().currentHeight();
-        return returnValue;
-    }
-
-    public int getCurrentPos() {
-        int returnValue = getLiftInstance().currentHeight();
-        return returnValue;
-    }
-
-    public int getMovingStatus() {
-        int returnValue = getLiftInstance().currentStatus();
-        return returnValue;
-    }
-
-    private String createDisconnectString() {
-        return getTextResource().disconnect();
-    }
-
-    private String createIPString() {
-        return getTextResource().ip() + ":";
-    }
-
-    private String createConnectString() {
-        return getTextResource().connect();
+    public ArrayList<Integer> getLiftingInfo() {
+        return lift.getLiftingInfo();
     }
 
     @Override
     public void closeView() {
-        isViewOpen = false;
+        if (this.timer!=null){
+            this.timer.cancel();
+            this.timer = null;
+        }
     }
 
     public boolean isDefined() {
@@ -205,24 +148,8 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
         xmlRpcDaemonInterface.lift_down(b);
     }
 
-    public void calibrate() {
-        xmlRpcDaemonInterface.calibrate();
-    }
-
     public ILift getLiftInstance() {
         return lift;
-    }
-
-    public void setMode(String selected) {
-        this.model.set("MODE", selected);
-    }
-
-    public void setAutoActivation(boolean b) {
-        this.model.set("AUTO_ACTIVATION", b);
-    }
-
-    public boolean getAutoActivation() {
-        return (boolean) this.model.get("AUTO_ACTIVATION", false);
     }
 
     public XmlRpcMyDaemonInterface getXmlRpcMyDaemonInterface() {
@@ -239,7 +166,7 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
     }
 
     public void stopLift() {
-        getLiftInstance().stop();
+        lift.stop();
     }
 
     public Integer getPort() {
@@ -264,5 +191,9 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
 
     public void setHighVirtualLimit(Integer value) {
         this.model.set("High_Virtual_Limit", value);
+    }
+
+    public void connect() {
+        this.lift.connect(getIP(),getPort(),1);
     }
 }

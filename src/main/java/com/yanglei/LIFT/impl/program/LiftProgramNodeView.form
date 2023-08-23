@@ -265,7 +265,7 @@
                   <gridbag weightx="0.0" weighty="0.0" ipadx="5"/>
                 </constraints>
               </hspacer>
-              <component id="72d34" class="javax.swing.JLabel">
+              <component id="72d34" class="javax.swing.JLabel" binding="height_feedback_field">
                 <constraints>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
@@ -311,7 +311,7 @@
                   <gridbag weightx="0.0" weighty="0.0" ipadx="5"/>
                 </constraints>
               </hspacer>
-              <component id="6a8aa" class="javax.swing.JLabel">
+              <component id="6a8aa" class="javax.swing.JLabel" binding="speed_feedback_field">
                 <constraints>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
@@ -357,7 +357,7 @@
                   <gridbag weightx="0.0" weighty="0.0" ipadx="5"/>
                 </constraints>
               </hspacer>
-              <component id="79343" class="javax.swing.JLabel">
+              <component id="79343" class="javax.swing.JLabel" binding="status_feedback_field">
                 <constraints>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>

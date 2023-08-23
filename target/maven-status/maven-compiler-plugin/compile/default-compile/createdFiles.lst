@@ -20,6 +20,7 @@ com/yanglei/LIFT/impl/installation/LiftInstallationNodeView$3.class
 com/yanglei/LIFT/impl/i18n/EnglishLanguagePack$1.class
 com/yanglei/LIFT/impl/program/LiftProgramNodeView$2.class
 com/yanglei/LIFT/impl/program/LiftProgramNodeView$5.class
+com/yanglei/LIFT/impl/installation/LiftInstallationNodeView$2$2.class
 com/yanglei/LIFT/impl/installation/LiftInstallationNodeView$1.class
 com/yanglei/LIFT/impl/installation/LiftInstallationNodeView$4$1.class
 com/yanglei/LIFT/impl/installation/LiftInstallationNodeService.class

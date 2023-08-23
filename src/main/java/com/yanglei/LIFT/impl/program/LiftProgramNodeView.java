@@ -1,8 +1,6 @@
 package com.yanglei.LIFT.impl.program;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -42,6 +40,9 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
     private JTextField target_height_field;
     private JSlider target_speed_slider;
     private JTextField target_speed_field;
+    private JLabel height_feedback_field;
+    private JLabel speed_feedback_field;
+    private JLabel status_feedback_field;
 
     public LiftProgramNodeView(Style style) {
         this.style = style;
@@ -60,26 +61,6 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
 
     @Override
     public void buildUI(JPanel panel, ContributionProvider<LiftProgramNodeContribution> provider) {
-        //LiftProgramNodeContribution contribution = provider.get();
-        /*panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-        panel.add(createInfo());
-
-        panel.add(createPosSlider(posSlider, 0, 300, provider));
-        panel.add(style.createVerticalSpacing());
-        panel.add(style.createVerticalSpacing());
-        panel.add(createStatusBox(provider));
-        panel.add(style.createVerticalSpacing());
-        panel.add(style.createVerticalSpacing());
-        Box imagebox = Box.createHorizontalBox();
-        imagebox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        ImageIcon icon1 = new ImageIcon(getScaledImage(getImage(filePath_logo), 200, 96));
-        JLabel labelLogo1 = new JLabel();
-        labelLogo1.setIcon(icon1);
-        imagebox.add(Box.createHorizontalGlue());
-        imagebox.add(style.createHorizontalSpacing());
-        imagebox.add(labelLogo1);
-        panel.add(imagebox);*/
-
         panel.setLayout(new BorderLayout());
         panel.add($$$getRootComponent$$$());
         setUI(provider);
@@ -142,6 +123,14 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
             public void mouseClicked(MouseEvent mouseEvent) {
                 super.mouseClicked(mouseEvent);
                 provider.get().execute();
+            }
+        });
+
+        stop_btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                super.mouseClicked(mouseEvent);
+                provider.get().stopLift();
             }
         });
     }
@@ -531,16 +520,16 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
         panel6.add(spacer14, gbc);
-        final JLabel label6 = new JLabel();
-        label6.setMaximumSize(new Dimension(100, 30));
-        label6.setMinimumSize(new Dimension(100, 30));
-        label6.setPreferredSize(new Dimension(100, 30));
-        label6.setText("200mm");
+        height_feedback_field = new JLabel();
+        height_feedback_field.setMaximumSize(new Dimension(100, 30));
+        height_feedback_field.setMinimumSize(new Dimension(100, 30));
+        height_feedback_field.setPreferredSize(new Dimension(100, 30));
+        height_feedback_field.setText("200mm");
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel6.add(label6, gbc);
+        panel6.add(height_feedback_field, gbc);
         final JPanel spacer15 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -554,16 +543,16 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
         panel5.add(panel7, gbc);
-        final JLabel label7 = new JLabel();
-        label7.setMaximumSize(new Dimension(80, 30));
-        label7.setMinimumSize(new Dimension(80, 30));
-        label7.setPreferredSize(new Dimension(80, 30));
-        label7.setText("当前速度");
+        final JLabel label6 = new JLabel();
+        label6.setMaximumSize(new Dimension(80, 30));
+        label6.setMinimumSize(new Dimension(80, 30));
+        label6.setPreferredSize(new Dimension(80, 30));
+        label6.setText("当前速度");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel7.add(label7, gbc);
+        panel7.add(label6, gbc);
         final JPanel spacer16 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
@@ -571,16 +560,16 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
         panel7.add(spacer16, gbc);
-        final JLabel label8 = new JLabel();
-        label8.setMaximumSize(new Dimension(100, 30));
-        label8.setMinimumSize(new Dimension(100, 30));
-        label8.setPreferredSize(new Dimension(100, 30));
-        label8.setText("200mm/s");
+        speed_feedback_field = new JLabel();
+        speed_feedback_field.setMaximumSize(new Dimension(100, 30));
+        speed_feedback_field.setMinimumSize(new Dimension(100, 30));
+        speed_feedback_field.setPreferredSize(new Dimension(100, 30));
+        speed_feedback_field.setText("200mm/s");
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel7.add(label8, gbc);
+        panel7.add(speed_feedback_field, gbc);
         final JPanel spacer17 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -594,16 +583,16 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
         gbc.gridy = 5;
         gbc.fill = GridBagConstraints.BOTH;
         panel5.add(panel8, gbc);
-        final JLabel label9 = new JLabel();
-        label9.setMaximumSize(new Dimension(80, 30));
-        label9.setMinimumSize(new Dimension(80, 30));
-        label9.setPreferredSize(new Dimension(80, 30));
-        label9.setText("当前状态");
+        final JLabel label7 = new JLabel();
+        label7.setMaximumSize(new Dimension(80, 30));
+        label7.setMinimumSize(new Dimension(80, 30));
+        label7.setPreferredSize(new Dimension(80, 30));
+        label7.setText("当前状态");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel8.add(label9, gbc);
+        panel8.add(label7, gbc);
         final JPanel spacer18 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
@@ -611,16 +600,16 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
         panel8.add(spacer18, gbc);
-        final JLabel label10 = new JLabel();
-        label10.setMaximumSize(new Dimension(100, 30));
-        label10.setMinimumSize(new Dimension(100, 30));
-        label10.setPreferredSize(new Dimension(100, 30));
-        label10.setText("空闲中");
+        status_feedback_field = new JLabel();
+        status_feedback_field.setMaximumSize(new Dimension(100, 30));
+        status_feedback_field.setMinimumSize(new Dimension(100, 30));
+        status_feedback_field.setPreferredSize(new Dimension(100, 30));
+        status_feedback_field.setText("空闲中");
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel8.add(label10, gbc);
+        panel8.add(status_feedback_field, gbc);
         final JPanel spacer19 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -646,5 +635,22 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
 
     public void showSpeed(Integer speed) {
         this.target_speed_field.setText(String.valueOf(speed));
+    }
+
+    public void reDefineComponent() {
+        target_height_slider.setMinimum(0);
+        target_height_slider.setMaximum(100);
+    }
+
+    public void refreshState(boolean b, Integer height, Integer speed, Integer status) {
+        if (b) {
+            height_feedback_field.setText("" + "mm");
+            speed_feedback_field.setText("" + "mm/s");
+            status_feedback_field.setText("");
+        } else {
+            height_feedback_field.setText("--");
+            speed_feedback_field.setText("--");
+            status_feedback_field.setText("--");
+        }
     }
 }
