@@ -91,6 +91,9 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
                         Integer errorCode = servoInfo.get(2);
                         view.refreshState(true, height,speed,status, current,temperature,errorCode);
                     }else {
+                        ArrayList<Integer> liftingInfo = getLiftingInfo();
+                        ArrayList<Integer> servoInfo = getServoInfo();
+
                         view.refreshState(false, 0, 0, 0, 0, 0, 0);
                     }
                 }
@@ -108,7 +111,7 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
     }
 
     public boolean getConnectionStatus() {
-        return lift.getConnectionStatus();
+        return lift.getConnectStatus();
     }
 
     public ArrayList<Integer> getLiftingInfo() {

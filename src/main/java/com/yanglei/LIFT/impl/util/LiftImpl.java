@@ -7,6 +7,7 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class LiftImpl implements ILift{
 
@@ -63,11 +64,11 @@ public class LiftImpl implements ILift{
     }
 
     @Override
-    public boolean getConnectionStatus() {
+    public boolean getConnectStatus() {
         ArrayList<String> args = new ArrayList<String>();
         Object result = null;
         try {
-            result = client.execute("getConnectionStatus", args);
+            result = client.execute("getConnectStatus", args);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -169,27 +170,41 @@ public class LiftImpl implements ILift{
     @Override
     public ArrayList<Integer> getLiftingInfo() {
         ArrayList<Boolean> args = new ArrayList<Boolean>();
-        Object result = null;
+        Object[] result = null;
+        ArrayList res = new ArrayList<Integer>();
         try {
-            result = client.execute("getLiftingInfo", args);
+            result = (Object[]) client.execute("getLiftingInfo", args);
+            for (int i = 0; i < result.length; i++) {
+                res.add((Integer) result[i]);
+            }
+            res.forEach(e->{
+                System.out.println(e);
+            });
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-        return null;
+        return res;
     }
 
     @Override
     public ArrayList<Integer> getServoInfo() {
         ArrayList<Boolean> args = new ArrayList<Boolean>();
-        Object result = null;
+        Object[] result = null;
+        ArrayList res = new ArrayList<Integer>();
         try {
-            result = client.execute("getServoInfo", args);
+            result = (Object[]) client.execute("getServoInfo", args);
+            for (int i = 0; i < result.length; i++) {
+                res.add((Integer) result[i]);
+            }
+            res.forEach(e->{
+                System.out.println(e);
+            });
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            return res;
         }
-        return null;
+        return res;
     }
 
     @Override

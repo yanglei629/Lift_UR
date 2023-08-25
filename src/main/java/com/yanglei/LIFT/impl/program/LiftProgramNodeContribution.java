@@ -63,7 +63,8 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
 
         languagePack = new LanguagePack(apiProvider.getSystemAPI().getSystemSettings().getLocalization());
 
-        setPos(10);
+        setPos(0);
+        setSpeed(100);
     }
 
     public InputValidationFactory getKeyboardInputValidationFactory() {

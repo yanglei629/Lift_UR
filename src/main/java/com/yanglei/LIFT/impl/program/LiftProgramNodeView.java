@@ -212,6 +212,7 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
     }
 
     public void showPos(int value) {
+        target_height_slider.setValue(value);
         target_height_field.setText(Integer.toString(value));
     }
 
@@ -634,6 +635,7 @@ public class LiftProgramNodeView implements SwingProgramNodeView<LiftProgramNode
     }
 
     public void showSpeed(Integer speed) {
+        this.target_speed_slider.setValue(speed);
         this.target_speed_field.setText(String.valueOf(speed));
     }
 

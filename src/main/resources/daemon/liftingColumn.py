@@ -1,12 +1,20 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 # coding=utf-8
+import sys
+
+PYTHON = sys.version_info[0]
+
+if PYTHON == 3:
+    from socketserver import ThreadingMixIn
+    from xmlrpc.server import SimpleXMLRPCServer
+else:
+    from SocketServer import ThreadingMixIn
+    from SimpleXMLRPCServer import SimpleXMLRPCServer
 
 import os
 import struct
 import time
-#from socketserver import ThreadingMixIn
 import traceback
-#from xmlrpc.server import SimpleXMLRPCServer
 
 import modbus_tk.defines as cts
 from modbus_tk import modbus_tcp
@@ -28,13 +36,13 @@ class ModbusTCP:
                 res = self.master.execute(self.slaveID, function_code = cts.READ_HOLDING_REGISTERS, starting_address = address, quantity_of_x = count)
 
                 if type(res) == bool:
-                    reTryNum = reTryNum + 1    
+                    reTryNum = reTryNum + 1
                 else:
                     return res
             except Exception as e:
                 traceback.print_exc()
                 logger.info("Read: Register->%s len->%s except:%s"%(str(address), str(count), e))
-                reTryNum = reTryNum + 1    
+                reTryNum = reTryNum + 1
                 # return False
         logger.info("Read: Register->%s len->%s ReTry Error"%(str(address), str(count)))
         return None
@@ -46,7 +54,7 @@ class ModbusTCP:
             try:
                 res = self.master.execute(self.slaveID, cts.WRITE_MULTIPLE_REGISTERS,  starting_address = address,output_value = values)
                 if res == False:
-                    reTryNum = reTryNum + 1    
+                    reTryNum = reTryNum + 1
                 else:
                     return res
             except Exception as e:
@@ -113,7 +121,7 @@ class ZTLifting:
         # todo 做连接状态的判断
         if self.testReadRegister() != None:
             logger.info("Connect Success")
-            self.connectStatus = True   
+            self.connectStatus = True
         else:
             logger.info("Connect Failed")
             self.connectStatus = False
@@ -124,7 +132,7 @@ class ZTLifting:
     def disConnect(self):
         self.connectStatus = False
         return True
-    
+
 
     @logger.logit(just_for_xmlrpc=True)
     def getConnectStatus(self):
@@ -185,7 +193,11 @@ class ZTLifting:
 
     @logger.logit(just_for_xmlrpc=True)
     def currentHeight(self):
-        """读取当前的高度"""
+        """读取当前的高度
+
+        Returns:
+            int: 当前的高度
+        """
         try:
             if self.connectStatus:
                 pluse = self.master.readHoldingRegisters(self.InovanceServo.ABS_POSITION, 2)
@@ -206,7 +218,11 @@ class ZTLifting:
 
     @logger.logit(just_for_xmlrpc=True)
     def currentSpeed(self):
-        """读取当前的速度"""
+        """读取当前的速度
+
+        Returns:
+            int: 速度
+        """
         try:
             if self.connectStatus:
                 speed = self.master.readHoldingRegisters(self.InovanceServo.ACTUAL_SPEED)[0]
@@ -224,13 +240,21 @@ class ZTLifting:
 
     @logger.logit(just_for_xmlrpc=True)
     def currentStatus(self):
-        """读取当前的状态"""
+        """读取当前的状态
+
+        Returns:
+            bool: True 已连接 False 未连接
+        """
         return self.connectStatus
-        
+
 
     @logger.logit(just_for_xmlrpc=True)
     def currentCurrent(self):
-        """当前电流"""
+        """当前电流
+
+        Returns:
+            int: 电流
+        """
         try:
             if self.connectStatus:
                 current = self.master.readHoldingRegisters(self.InovanceServo.CURRENT)[0]
@@ -247,7 +271,11 @@ class ZTLifting:
 
     @logger.logit(just_for_xmlrpc=True)
     def currentTemperature(self):
-        """当前温度"""
+        """当前温度
+
+        Returns:
+            int: 温度
+        """
         try:
             if self.connectStatus:
                 temperature = self.master.readHoldingRegisters(self.InovanceServo.TEMPERATURE)[0]
@@ -264,7 +292,11 @@ class ZTLifting:
 
     @logger.logit(just_for_xmlrpc=True)
     def errorCode(self):
-        """当前错误码"""
+        """当前错误码
+
+        Returns:
+            int: 错误码
+        """
         try:
             if self.connectStatus:
                 errorCode = self.master.readHoldingRegisters(self.InovanceServo.ERROR_CODE)[0]
@@ -277,8 +309,8 @@ class ZTLifting:
             traceback.print_exc()
             logger.info(e)
             return False
-        
-        
+
+
     @logger.logit(just_for_xmlrpc=True)
     def getLiftingInfo(self):
         if self.connectStatus:
@@ -287,7 +319,8 @@ class ZTLifting:
             status = 0 if speed == 0 else 1
             return [height, speed, status]
         else:
-            return False
+            # return False
+            return [-1, -1, -1]
 
     @logger.logit(just_for_xmlrpc=True)
     def getServoInfo(self):
@@ -297,23 +330,25 @@ class ZTLifting:
             errorCode = self.errorCode()
             return [current, temperature, errorCode]
         else:
-            return False
+            # return False
+            return [-1, -1, -1]
 
 
     @logger.logit(just_for_xmlrpc=True)
     def move(self, pos, speed, block=True):
         """移动指令"""
+        logger.info("move to pos: " + str(pos) + ", with speed: " + str(speed))
         self.moveBlockStatus = True
         try:
             # 高度转换
             actualPos = self.__posLimit(pos)
             targetPluse = int(actualPos * self.PLUSE_ONE_MM)
             posValue = struct.unpack("2H", struct.pack("i", targetPluse))
-            
+
             # 速度转换
             speed = min(speed, self.DEFAULT_MAX_SPEED)          # 200mm/s is max move speed
             actualRPM = int(speed * self.SPEED_CONVERTOR)
-            
+
             logger.info("move actual pos %s speed %s"%(actualPos, actualRPM))
             if self.connectStatus:
                 if self.errorCode() > 0:
@@ -335,7 +370,7 @@ class ZTLifting:
                         self.master.writeHoldingRegisters(self.InovanceServo.VISUAL_DI, [self.InovanceServo.SERVO_ON])
                         logger.info("Fault Detected During Movement Block")
                         return False
-                        
+
                 return True
             else:
                 return False
@@ -387,7 +422,7 @@ class ZTLifting:
         self.moveBlockStatus = False
         try:
             if self.connectStatus:
-                
+
                 self.master.writeHoldingRegisters(self.InovanceServo.E_STOP, [1])
                 self.master.writeHoldingRegisters(self.InovanceServo.VISUAL_DI, [self.InovanceServo.SERVO_ON])
                 time.sleep(0.1)

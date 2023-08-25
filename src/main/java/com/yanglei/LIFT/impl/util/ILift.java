@@ -7,7 +7,7 @@ public interface ILift{
 
     boolean disConnect();
 
-    boolean getConnectionStatus();
+    boolean getConnectStatus();
 
     boolean setVirtualLimit(Integer min, Integer max);
 

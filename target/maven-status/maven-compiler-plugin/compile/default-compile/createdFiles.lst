@@ -33,6 +33,5 @@ com/yanglei/LIFT/impl/installation/LiftInstallationNodeContribution.class
 com/yanglei/LIFT/impl/program/LiftProgramNodeView.class
 com/yanglei/LIFT/impl/V5Style.class
 com/yanglei/LIFT/impl/i18n/EnglishLanguagePack.class
-com/yanglei/LIFT/impl/installation/LiftInstallationNodeView$3$1.class
 com/yanglei/LIFT/impl/Style.class
 com/yanglei/LIFT/impl/i18n/LanguageResource.class
