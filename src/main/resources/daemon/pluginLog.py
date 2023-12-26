@@ -22,8 +22,8 @@ class Log:
         Examples
         --------
             >>> from log import Log
-            >>> logger = Log("AG95")
-            or
+            >>> logger = Log("AG95")    
+            or 
             >>> logger = Log("AG95", log_path = "your log file path")
 
             >>> logger.info("info 级别的记录并不会使log_count增加")
@@ -43,7 +43,7 @@ class Log:
             2022-07-07 02:09:59.701 | AG95:   1 | INFO   | -----     Host: 192.168.1.200      -----
             2022-07-07 02:09:59.701 | AG95:   1 | INFO   | -----           Port: 40           -----
             2022-07-07 02:09:59.701 | AG95:   1 | INFO   | ----------------------------------------
-
+            
             # 现在定义一个函数,并使用提供的装饰器装饰
             >>> @logger.logit
             >>> def connect_gripper(a, b, c:int=9):
@@ -90,7 +90,7 @@ class Log:
         """
         fmt = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d | %(name)s:%(log_count)04s | " +
-                "%(levelname)-5s " + " | %(message)s",
+            "%(levelname)-5s " + " | %(message)s",
             datefmt='%Y-%m-%d %I:%M:%S')
         flt = logging.Filter()
         flt.filter = self.__filter
@@ -153,8 +153,13 @@ class Log:
         if PYTHON == 3:
             parms = inspect.signature(func).parameters
         else:
+            from collections import OrderedDict
             argspec = inspect.getargspec(func)
-            parms = {}
+            defaults = argspec.defaults
+            defaults_value = None
+            if defaults is not None:
+                defaults_value = dict(zip(argspec.args[-len(defaults):], defaults))
+            parms = OrderedDict()
             for arg in argspec.args:
                 parms.update({arg:arg})
 
@@ -164,7 +169,7 @@ class Log:
         temp = 0
 
         for name, parm in parms.items():
-            if name == "self":
+            if name == "self":          # self 参数不处理
                 temp += 1
                 continue
             if temp < len(args):
@@ -174,21 +179,29 @@ class Log:
                 else:
                     value = str(parm).split("=")[-1]
                     value_type = ""
-            else:
-                if hasattr(parm, "default"):
-                    value = str(parm).split("=")[-1].replace(" ", "")
-                    if parm.annotation == inspect._empty:
-                        value_type = ""
-                    else:
-                        _type = str(parm.annotation)
-                        if "class" in _type:
-                            value_type = ":" + _type[8:-2]
+            else:               # 处理默认参数
+                if PYTHON == 3:
+                    if hasattr(parm, "default"):
+                        value = str(parm).split("=")[-1].replace(" ", "")
+                        if parm.annotation == inspect._empty:
+                            value_type = ""
                         else:
-                            value_type = ":" + str(parm.annotation)
+                            _type = str(parm.annotation)
+                            if "class" in _type:
+                                value_type = ":" + _type[8:-2]
+                            else:
+                                value_type = ":" + str(parm.annotation)
 
+                    else:
+                        value = ","
+                        value_type = ","
                 else:
-                    value = ","
-                    value_type = ","
+                    if defaults_value is not None:
+                        value = defaults_value.get(name)
+                        value_type =  ":" + type(value).__name__
+                    else:
+                        value = ","
+                        value_type = ","
 
             msg_args += name + "%s" % value_type + " = %s" % value
             temp += 1
@@ -203,7 +216,7 @@ class Log:
             line = stack[2][2]
             module_name = stack[2][1].split("/")[-1]
             is_xmlrpc_request = True if module_name == "SimpleXMLRPCServer.py" else False
-
+            
         return msg_args + ")", line, module_name, is_xmlrpc_request
 
 
@@ -216,7 +229,6 @@ class Log:
                 name = func.__name__
                 # 获取函数参数返回一个有序字典
                 func_args, lineno, module_name, is_xmlrpc_request = self.__get_func_args(func, args)
-
                 # 调用前先记录
                 if just_for_xmlrpc & is_xmlrpc_request:
                     self.debug("XMLRPC Call: %s:%s | Func: %s"%(module_name,lineno,name)+func_args)
@@ -272,7 +284,7 @@ class Log:
         t.append("Host: %s"%host.center(MAX_STR_LENGTH,
                                         " ").center(MAX_PRINT_LENGTH, "-"))
         t.append("Port: %s"%str(port).center(MAX_STR_LENGTH,
-                                             " ").center(MAX_PRINT_LENGTH, "-"))
+                                        " ").center(MAX_PRINT_LENGTH, "-"))
         t.append("-".center(MAX_PRINT_LENGTH, "-"))
         [self.info(i) for i in t]
 

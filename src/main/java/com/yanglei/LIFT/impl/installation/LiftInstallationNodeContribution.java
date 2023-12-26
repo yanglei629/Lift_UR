@@ -33,6 +33,7 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
 
     //communication scripter
     private final ScriptSender sender;
+
     // Instance of ScriptExporter, Used to extract values from URScript
     private final ScriptExporter exporter;
     public static final int PORT = 9120;
@@ -41,6 +42,7 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
 
     private final LanguagePack languagePack;
     private Timer timer;
+    private boolean isConnect;
 
     public LiftInstallationNodeContribution(InstallationAPIProvider apiProvider, DataModel model, LiftInstallationNodeView view, LiftDaemonService daemonService) {
         this.apiProvider = apiProvider;
@@ -55,6 +57,12 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
         xmlRpcDaemonInterface = new XmlRpcMyDaemonInterface("127.0.0.1", PORT);
 
         languagePack = new LanguagePack(apiProvider.getSystemAPI().getSystemSettings().getLocalization());
+
+        setIP("192.168.1.12");
+        setPort(502);
+        setStroke(500);
+        setLowVirtualLimit(0);
+        setHighVirtualLimit(getStroke());
     }
 
     public TextResource getTextResource() {
@@ -72,32 +80,43 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
 
     @Override
     public void openView() {
-        if (this.timer ==null){
+        if (this.timer == null) {
             this.timer = new Timer();
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     boolean connectionStatus = getConnectionStatus();
-                    if (connectionStatus){
-                        ArrayList<Integer> liftingInfo = getLiftingInfo();
-                        ArrayList<Integer> servoInfo = getServoInfo();
+                    if (connectionStatus) {
+                        isConnect = true;
+                        try {
+                            ArrayList<Double> liftingInfo = getLiftingInfo();
+                            ArrayList<Double> servoInfo = getServoInfo();
 
-                        Integer height = liftingInfo.get(0);
-                        Integer speed = liftingInfo.get(1);
-                        Integer status = liftingInfo.get(2);
+                            Double height = liftingInfo.get(0);
+                            Double speed = liftingInfo.get(1);
+                            Double status = liftingInfo.get(2);
 
-                        Integer current = servoInfo.get(0);
-                        Integer temperature = servoInfo.get(1);
-                        Integer errorCode = servoInfo.get(2);
-                        view.refreshState(true, height,speed,status, current,temperature,errorCode);
-                    }else {
-                        ArrayList<Integer> liftingInfo = getLiftingInfo();
-                        ArrayList<Integer> servoInfo = getServoInfo();
+                            Double current = servoInfo.get(0) / 100;
+                            Double temperature = servoInfo.get(1);
+                            Double errorCode = servoInfo.get(2);
 
-                        view.refreshState(false, 0, 0, 0, 0, 0, 0);
+                            view.refreshState(true, height, speed, status, current, temperature, errorCode);
+                            view.setConnected(true);
+                        } catch (Exception e) {
+                        }
+                    } else {
+                        isConnect = false;
+                        /*ArrayList<Double> liftingInfo = getLiftingInfo();
+                        ArrayList<Double> servoInfo = getServoInfo();*/
+
+                        try {
+                            view.refreshState(false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+                            view.setConnected(false);
+                        } catch (Exception e) {
+                        }
                     }
                 }
-            }, 0,2000);
+            }, 0, 2000);
         }
 
         view.showIP(getIP());
@@ -106,7 +125,7 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
         view.showHighVirtualLimit(getHighVirtualLimit());
     }
 
-    private ArrayList<Integer> getServoInfo() {
+    private ArrayList<Double> getServoInfo() {
         return lift.getServoInfo();
     }
 
@@ -114,13 +133,13 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
         return lift.getConnectStatus();
     }
 
-    public ArrayList<Integer> getLiftingInfo() {
+    public ArrayList<Double> getLiftingInfo() {
         return lift.getLiftingInfo();
     }
 
     @Override
     public void closeView() {
-        if (this.timer!=null){
+        if (this.timer != null) {
             this.timer.cancel();
             this.timer = null;
         }
@@ -143,14 +162,6 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
         model.set(IP_KEY, msg);
     }
 
-    public void moveUp(boolean b) {
-        xmlRpcDaemonInterface.lift_up(b);
-    }
-
-    public void moveDown(boolean b) {
-        xmlRpcDaemonInterface.lift_down(b);
-    }
-
     public ILift getLiftInstance() {
         return lift;
     }
@@ -161,11 +172,6 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
 
     public KeyboardInputFactory getKeyboardFactory() {
         return this.keyboardFactory;
-    }
-
-
-    public void disConnect() {
-        boolean result = getLiftInstance().disConnect();
     }
 
     public void stopLift() {
@@ -197,6 +203,36 @@ public class LiftInstallationNodeContribution implements InstallationNodeContrib
     }
 
     public void connect() {
-        this.lift.connect(getIP(),getPort(),1);
+        this.lift.setStroke(getStroke());
+        this.lift.setVirtualLimit(getLowVirtualLimit(), getHighVirtualLimit());
+        this.lift.connect(getIP(), getPort(), 1);
+    }
+
+    public void resetLift() {
+        this.lift.reset();
+    }
+
+    public void jogUp(boolean b) {
+        this.lift.jogUp(b);
+    }
+
+    public void jogDown(boolean b) {
+        this.lift.jogDown(b);
+    }
+
+    public Integer getStroke() {
+        return this.model.get("Stroke", 500);
+    }
+
+    public void setStroke(Integer value) {
+        this.model.set("Stroke", value);
+    }
+
+    public void disConnect() {
+        this.lift.disConnect();
+    }
+
+    public boolean isConnect() {
+        return this.isConnect;
     }
 }

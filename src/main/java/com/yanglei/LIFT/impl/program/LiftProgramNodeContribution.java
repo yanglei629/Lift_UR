@@ -13,10 +13,8 @@ import com.ur.urcap.api.domain.ProgramAPI;
 import com.ur.urcap.api.domain.data.DataModel;
 import com.ur.urcap.api.domain.script.ScriptWriter;
 import com.ur.urcap.api.domain.undoredo.UndoRedoManager;
-import com.ur.urcap.api.domain.undoredo.UndoableChanges;
 import com.ur.urcap.api.domain.userinteraction.inputvalidation.InputValidationFactory;
 import com.ur.urcap.api.domain.userinteraction.keyboard.KeyboardInputFactory;
-import com.ur.urcap.api.domain.userinteraction.keyboard.KeyboardNumberInput;
 
 import scriptCommunicator.ScriptExporter;
 import scriptCommunicator.ScriptSender;
@@ -27,8 +25,6 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
     private final UndoRedoManager undoRedoManager;
     private static final String POSKEY = "pos";
     private static final int DEFAULT_POS = 0;
-
-    private static final String DISPOSKEY = "DISPOSKEY";
 
     // Used to send a URScript for execution
     private final ScriptSender sender;
@@ -46,7 +42,9 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
 
     private final KeyboardInputFactory keyboardFactory;
     private final InputValidationFactory keyboardInputValidationFactory;
-    private Timer uiTimer;        //UI updates from non-GUI threads must use EventQueue.invokeLater (or SwingUtilities.invokeLater)
+
+    //UI updates from non-GUI threads must use EventQueue.invokeLater (or SwingUtilities.invokeLater)
+    private Timer uiTimer;
     private final LanguagePack languagePack;
 
     public LiftProgramNodeContribution(ProgramAPIProvider apiProvider, LiftProgramNodeView view, DataModel model) {
@@ -64,38 +62,58 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
         languagePack = new LanguagePack(apiProvider.getSystemAPI().getSystemSettings().getLocalization());
 
         setPos(0);
-        setSpeed(100);
+        setSpeed(10);
     }
 
     public InputValidationFactory getKeyboardInputValidationFactory() {
         return keyboardInputValidationFactory;
     }
 
-    private TextResource getTextResource() {
+    public TextResource getTextResource() {
         return languagePack.getTextResource();
     }
 
     @Override
     public void openView() {
-        view.reDefineComponent();
+        // i18n
+        view.setLiftInfoPanel(getTextResource().liftInfo());
+        view.setMovePanel(getTextResource().move());
+        view.setTargetHeightLabel(getTextResource().targetPos());
+        view.setTargetSpeedLabel(getTextResource().targetSpeed());
+        view.setExecuteBtn(getTextResource().perform());
+        view.setStopBtn(getTextResource().stop());
+        view.setResetBtn(getTextResource().reset());
+        view.setJogUpBtn(getTextResource().jogUp());
+        view.setJogDownBtn(getTextResource().jogDown());
+        view.setHeightFeedbackLabel(getTextResource().currentPos());
+        view.setSpeedFeedbackLabel(getTextResource().currentSpeed());
+        view.setStatusFeedbackLabel(getTextResource().status());
+
+        view.reDefineComponent(this);
         view.showPos(getPos());
         view.showSpeed(getSpeed());
+        view.setConnect(getInstallation().isConnect());
 
-        if (this.timer ==null) {
+        if (this.timer == null) {
             this.timer = new Timer();
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     boolean connectionStatus = getInstallation().getConnectionStatus();
                     if (connectionStatus) {
-                        ArrayList<Integer> liftingInfo = getInstallation().getLiftingInfo();
+                        try {
+                            view.setConnect(true);
+                            ArrayList<Double> liftingInfo = getInstallation().getLiftingInfo();
 
-                        Integer height = liftingInfo.get(0);
-                        Integer speed = liftingInfo.get(1);
-                        Integer status = liftingInfo.get(2);
-                        view.refreshState(true, height, speed, status);
+                            Double height = liftingInfo.get(0);
+                            Double speed = liftingInfo.get(1);
+                            Double status = liftingInfo.get(2);
+                            view.refreshState(LiftProgramNodeContribution.this,true, height, speed, status);
+                        } catch (Exception e) {
+                        }
                     } else {
-                        view.refreshState(false, 0, 0, 0);
+                        view.setConnect(false);
+                        view.refreshState(LiftProgramNodeContribution.this,false, 0.0, 0.0, 0.0);
                     }
                 }
             }, 0, 2000);
@@ -105,7 +123,7 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
 
     @Override
     public void closeView() {
-        if (this.timer!=null){
+        if (this.timer != null) {
             this.timer.cancel();
             this.timer = null;
         }
@@ -113,8 +131,7 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
 
     @Override
     public String getTitle() {
-        return "BYLift: Pos : " + (model.isSet(POSKEY) ? getPos() : "");
-        //return "BYLift: Pos : " + getPos();
+        return getTextResource().moveTo() + ":" + getPos() + "mm" + " " + getTextResource().speed() + ":" + getSpeed() + "mm/s";
     }
 
     @Override
@@ -124,26 +141,17 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
 
     @Override
     public void generateScript(ScriptWriter scriptWriter) {
-        //build rpc client
+        // build rpc client
         scriptWriter.appendLine("lift=rpc_factory(\"xmlrpc\",\"http://127.0.0.1:9120/\")");
-        scriptWriter.appendLine(String.format("lift.move($1%s, $2%s)",getPos(),getSpeed()));
+        scriptWriter.appendLine(String.format("lift.move(%1$s, %2$s)", getPos(), getSpeed()));
 
-        scriptWriter.appendLine("while lift.currenHeight() != " + getPos() + ":");
+        /*scriptWriter.appendLine("while lift.currentHeight() != " + getPos() + ":");
         scriptWriter.appendLine("    sleep(1)");
-        scriptWriter.appendLine("end");
+        scriptWriter.appendLine("end");*/
     }
 
     public int getPos() {
         return model.get(POSKEY, DEFAULT_POS);
-    }
-
-    public void onPosSelection(final int pos) {
-        undoRedoManager.recordChanges(new UndoableChanges() {
-            @Override
-            public void executeChanges() {
-                model.set(POSKEY, pos);
-            }
-        });
     }
 
     private LiftInstallationNodeContribution getInstallation() {
@@ -151,8 +159,7 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
     }
 
     public void setPos(Integer pos) {
-        // model.set(POSKEY, pos);
-        programAPI.getUndoRedoManager().recordChanges(()->{
+        programAPI.getUndoRedoManager().recordChanges(() -> {
             model.set(POSKEY, pos);
         });
     }
@@ -166,16 +173,28 @@ public class LiftProgramNodeContribution implements ProgramNodeContribution {
     }
 
     public void setSpeed(Integer value) {
-        programAPI.getUndoRedoManager().recordChanges(()->{
+        programAPI.getUndoRedoManager().recordChanges(() -> {
             model.set("Speed", value);
         });
     }
 
     public void execute() {
-        getInstalltion().getLiftInstance().move(getPos(),getSpeed());
+        getInstalltion().getLiftInstance().move(getPos(), getSpeed(), false);
     }
 
     public void stopLift() {
         getInstalltion().stopLift();
+    }
+
+    public void reset() {
+        getInstallation().resetLift();
+    }
+
+    public void jogUp(boolean b) {
+        getInstallation().jogUp(b);
+    }
+
+    public void jogDown(boolean b) {
+        getInstallation().jogDown(b);
     }
 }

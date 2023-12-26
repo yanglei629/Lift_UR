@@ -1,18 +1,14 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1692926063248
+Bnd-LastModified: 1703526480606
 Build-Jdk: 1.8.0_292
 Built-By: ur
 Bundle-Activator: com.yanglei.LIFT.impl.Activator
 Bundle-Category: URCap
-Bundle-ContactAddress: No.89 Hu Guang road, Minhang district, Shanghai
-Bundle-Copyright: Copyright (C) 2017-2023 Backyard All Rights Reserved
-Bundle-Description: Backyard Electrical Lift
 Bundle-LicenseType: License type
 Bundle-ManifestVersion: 2
 Bundle-Name: LIFT
 Bundle-SymbolicName: com.yanglei.LIFT
-Bundle-Vendor: Backyard shanghai Inc.
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Created-By: Apache Maven Bundle Plugin
 Export-Package: com.intellij.uiDesigner.core;version="1.0.0";uses:="java
  x.swing",scriptCommunicator;version="1.0.0"

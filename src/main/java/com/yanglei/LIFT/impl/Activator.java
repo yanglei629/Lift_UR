@@ -1,5 +1,7 @@
 package com.yanglei.LIFT.impl;
 
+import com.ur.urcap.api.domain.system.localization.Localization;
+import com.yanglei.LIFT.impl.i18n.LanguagePack;
 import com.yanglei.LIFT.impl.installation.LiftInstallationNodeService;
 import com.yanglei.LIFT.impl.program.LiftProgramNodeService;
 import com.ur.urcap.api.contribution.DaemonService;
@@ -8,6 +10,9 @@ import org.osgi.framework.BundleContext;
 
 import com.ur.urcap.api.contribution.installation.swing.SwingInstallationNodeService;
 import com.ur.urcap.api.contribution.program.swing.SwingProgramNodeService;
+import org.osgi.framework.ServiceReference;
+
+import java.util.Locale;
 
 
 /**
@@ -18,10 +23,13 @@ public class Activator implements BundleActivator {
 
     @Override
     public void start(BundleContext bundleContext) throws Exception {
-        System.out.println("Backyard Lift urCap says Hello !");
+        System.out.println("Lift urCap says Hello !");
+        // program node
+        LiftProgramNodeService liftProgramNodeService = new LiftProgramNodeService();
+        bundleContext.registerService(SwingProgramNodeService.class, liftProgramNodeService, null);
+        //bundleContext.registerService(SwingProgramNodeService.class, new LiftProgramNodeService(), null);
 
-        bundleContext.registerService(SwingProgramNodeService.class, new LiftProgramNodeService(), null);
-
+        // install node
         daemonService = new LiftDaemonService();
         LiftInstallationNodeService installationNodeService = new LiftInstallationNodeService(daemonService);
 

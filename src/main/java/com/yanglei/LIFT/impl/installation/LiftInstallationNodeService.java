@@ -14,6 +14,7 @@ import com.ur.urcap.api.contribution.installation.InstallationAPIProvider;
 import com.ur.urcap.api.contribution.installation.swing.SwingInstallationNodeService;
 import com.ur.urcap.api.domain.SystemAPI;
 import com.ur.urcap.api.domain.data.DataModel;
+import com.yanglei.LIFT.impl.i18n.LanguagePack;
 
 public class LiftInstallationNodeService implements SwingInstallationNodeService<LiftInstallationNodeContribution, LiftInstallationNodeView> {
     private LiftDaemonService daemonService;
@@ -24,7 +25,6 @@ public class LiftInstallationNodeService implements SwingInstallationNodeService
 
     @Override
     public void configureContribution(ContributionConfiguration configuration) {
-
     }
 
     @Override

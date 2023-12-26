@@ -173,4 +173,84 @@ public class TextResource {
     public String autoActivation() {
         return getStringByKey("Auto-activation");
     }
+
+    public String targetSpeed() {
+        return getStringByKey("Target_Speed");
+    }
+
+    public String port() {
+        return getStringByKey("Port");
+    }
+
+    public String stroke() {
+        return getStringByKey("Stroke");
+    }
+
+    public String reset() {
+        return getStringByKey("Reset");
+    }
+
+    public String highVirtualLimit() {
+        return getStringByKey("High_Virtual_Limit");
+    }
+
+    public String lowVirtualLimit() {
+        return getStringByKey("Low_Virtual_Limit");
+    }
+
+    public String currentSpeed() {
+        return getStringByKey("current_speed");
+    }
+
+    public String currentCurrent() {
+        return  getStringByKey("Current_Current");
+    }
+
+    public String currentTemperature() {
+        return getStringByKey("Current_Temperature");
+    }
+
+    public String errorCode() {
+        return getStringByKey("Error_Code");
+    }
+
+    public String connectionInfo() {
+        return getStringByKey("Connection_Info");
+    }
+
+    public String virtualLimit() {
+        return getStringByKey("Virtual_Limit");
+    }
+
+    public String liftInfo() {
+        return getStringByKey("Lift_Info");
+    }
+
+    public String servoInfo() {
+        return getStringByKey("Servo_Info");
+    }
+
+    public String move() {
+        return getStringByKey("Move");
+    }
+
+    public String jogUp() {
+        return  getStringByKey("Jog_Up");
+    }
+
+    public String jogDown() {
+        return getStringByKey("Jog_Down");
+    }
+
+    public String moveTo() {
+        return getStringByKey("Move_To");
+    }
+
+    public String speed() {
+       return getStringByKey("Speed");
+    }
+
+    public String lift() {
+        return getStringByKey("Lift");
+    }
 }

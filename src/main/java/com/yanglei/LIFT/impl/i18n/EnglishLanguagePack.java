@@ -7,22 +7,22 @@ import java.util.Locale;
 
 public class EnglishLanguagePack extends LanguagePack {
 
-	public EnglishLanguagePack() {
-		super(new Localization() {
-			@Override
-			public Locale getLocale() {
-				return Locale.ROOT;
-			}
+    public EnglishLanguagePack() {
+        super(new Localization() {
+            @Override
+            public Locale getLocale() {
+                return Locale.ROOT;
+            }
 
-			@Override
-			public Locale getLocaleForProgrammingLanguage() {
-				return Locale.ROOT;
-			}
+            @Override
+            public Locale getLocaleForProgrammingLanguage() {
+                return Locale.ROOT;
+            }
 
-			@Override
-			public UnitType getUnitType() {
-				return UnitType.METRIC;
-			}
-		});
-	}
+            @Override
+            public UnitType getUnitType() {
+                return UnitType.METRIC;
+            }
+        });
+    }
 }

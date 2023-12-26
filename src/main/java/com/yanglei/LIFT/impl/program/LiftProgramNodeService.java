@@ -13,19 +13,22 @@ import com.ur.urcap.api.contribution.program.ProgramAPIProvider;
 import com.ur.urcap.api.contribution.program.swing.SwingProgramNodeService;
 import com.ur.urcap.api.domain.SystemAPI;
 import com.ur.urcap.api.domain.data.DataModel;
+import com.yanglei.LIFT.impl.i18n.LanguagePack;
 
 
 public class LiftProgramNodeService implements SwingProgramNodeService<LiftProgramNodeContribution, LiftProgramNodeView> {
 
+    private LiftProgramNodeContribution contribution;
+    private LanguagePack languagePack;
+
     @Override
     public String getId() {
-        return "Backyad Lift Program Node";
+        return "Lift Program Node";
     }
 
     @Override
     public void configureContribution(ContributionConfiguration configuration) {
         configuration.setChildrenAllowed(false);
-
     }
 
     @Override
@@ -44,7 +47,8 @@ public class LiftProgramNodeService implements SwingProgramNodeService<LiftProgr
     @Override
     public LiftProgramNodeContribution createNode(ProgramAPIProvider apiProvider,
                                                   LiftProgramNodeView view, DataModel model, CreationContext context) {
-        return new LiftProgramNodeContribution(apiProvider, view, model);
-    }
 
+        LiftProgramNodeContribution liftProgramNodeContribution = new LiftProgramNodeContribution(apiProvider, view, model);
+        return liftProgramNodeContribution;
+    }
 }

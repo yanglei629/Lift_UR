@@ -11,7 +11,7 @@ public interface ILift{
 
     boolean setVirtualLimit(Integer min, Integer max);
 
-    boolean move(Integer pos, Integer speed);
+    boolean move(Integer pos, Integer speed, boolean block);
 
     boolean jogUp(boolean enable);
 
@@ -21,8 +21,10 @@ public interface ILift{
 
     boolean reset();
 
-    ArrayList<Integer> getLiftingInfo();
-    ArrayList<Integer> getServoInfo();
+    void setStroke(Integer stoke);
+
+    ArrayList<Double> getLiftingInfo();
+    ArrayList<Double> getServoInfo();
 
     Integer currentHeight();
 

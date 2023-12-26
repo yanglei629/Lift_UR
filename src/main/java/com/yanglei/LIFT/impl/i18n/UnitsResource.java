@@ -6,37 +6,37 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class UnitsResource {
-	//private final static String fileName = "com/ur/urcap/examples/localizationswing/impl/i18n/units/units";
-	//private final static String fileName = "/i18n/units/units";
-	private final static String fileName = "i18n/units/units";
-	private ResourceBundle resource;
+    //private final static String fileName = "com/ur/urcap/examples/localizationswing/impl/i18n/units/units";
+    //private final static String fileName = "/i18n/units/units";
+    private final static String fileName = "i18n/units/units";
+    private ResourceBundle resource;
 
-	public UnitsResource(Locale locale) {
-		locale = locale.equals(LanguagePack.rootLanguageLocale) ? Locale.ROOT : locale;
-		resource = ResourceBundle.getBundle(fileName, locale, new UTF8Control());
-	}
+    public UnitsResource(Locale locale) {
+        locale = locale.equals(LanguagePack.rootLanguageLocale) ? Locale.ROOT : locale;
+        resource = ResourceBundle.getBundle(fileName, locale, new UTF8Control());
+    }
 
-	public String UNIT_in() {
-		return getStringByKey("UNIT_in");
-	}
+    public String UNIT_in() {
+        return getStringByKey("UNIT_in");
+    }
 
-	public String UNIT_MM() {
-		return getStringByKey("UNIT_mm");
-	}
+    public String UNIT_MM() {
+        return getStringByKey("UNIT_mm");
+    }
 
-	public String lengthUnit(Length.Unit unit) {
-		if (unit == Length.Unit.MM) {
-			return UNIT_MM();
-		} else {
-			return UNIT_in();
-		}
-	}
+    public String lengthUnit(Length.Unit unit) {
+        if (unit == Length.Unit.MM) {
+            return UNIT_MM();
+        } else {
+            return UNIT_in();
+        }
+    }
 
-	private String getStringByKey(String key) {
-		try {
-			return resource.getString(key);
-		} catch (Exception e) {
-			return "!"+key;
-		}
-	}
+    private String getStringByKey(String key) {
+        try {
+            return resource.getString(key);
+        } catch (Exception e) {
+            return "!" + key;
+        }
+    }
 }

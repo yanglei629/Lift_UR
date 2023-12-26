@@ -78,7 +78,9 @@ public class LiftImpl implements ILift{
 
     @Override
     public boolean setVirtualLimit(Integer min, Integer max) {
-        ArrayList<String> args = new ArrayList<String>();
+        ArrayList<Integer> args = new ArrayList<Integer>();
+        args.add(min);
+        args.add(max);
         Object result = null;
         try {
             result = client.execute("setVisualLimit", args);
@@ -90,10 +92,11 @@ public class LiftImpl implements ILift{
     }
 
     @Override
-    public boolean move(Integer pos, Integer speed) {
-        ArrayList<Integer> args = new ArrayList<Integer>();
+    public boolean move(Integer pos, Integer speed, boolean block) {
+        ArrayList<Object> args = new ArrayList<Object>();
         args.add(pos);
         args.add(speed);
+        args.add(block);
         Object result = null;
         try {
             result = client.execute("move", args);
@@ -168,14 +171,29 @@ public class LiftImpl implements ILift{
     }
 
     @Override
-    public ArrayList<Integer> getLiftingInfo() {
+    public void setStroke(Integer stoke) {
+        ArrayList<Integer> args = new ArrayList<Integer>();
+        args.add(stoke);
+        Object result = null;
+        try {
+            result = client.execute("setLiftingLength", args);
+        } catch (Exception e){}
+    }
+
+    @Override
+    public ArrayList<Double> getLiftingInfo() {
         ArrayList<Boolean> args = new ArrayList<Boolean>();
         Object[] result = null;
-        ArrayList res = new ArrayList<Integer>();
+        ArrayList res = new ArrayList<Double>();
         try {
             result = (Object[]) client.execute("getLiftingInfo", args);
             for (int i = 0; i < result.length; i++) {
-                res.add((Integer) result[i]);
+                if(result[i] instanceof Double){
+                    res.add(result[i]);
+                }
+                if (result[i] instanceof Integer){
+                    res.add(Double.valueOf((Integer)result[i]));
+                }
             }
             res.forEach(e->{
                 System.out.println(e);
@@ -188,14 +206,19 @@ public class LiftImpl implements ILift{
     }
 
     @Override
-    public ArrayList<Integer> getServoInfo() {
+    public ArrayList<Double> getServoInfo() {
         ArrayList<Boolean> args = new ArrayList<Boolean>();
         Object[] result = null;
-        ArrayList res = new ArrayList<Integer>();
+        ArrayList res = new ArrayList<Double>();
         try {
             result = (Object[]) client.execute("getServoInfo", args);
             for (int i = 0; i < result.length; i++) {
-                res.add((Integer) result[i]);
+                if(result[i] instanceof Double){
+                    res.add(result[i]);
+                }
+                if (result[i] instanceof Integer){
+                    res.add(Double.valueOf((Integer)result[i]));
+                }
             }
             res.forEach(e->{
                 System.out.println(e);

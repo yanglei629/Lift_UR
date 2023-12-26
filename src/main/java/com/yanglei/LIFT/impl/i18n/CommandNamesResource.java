@@ -4,25 +4,25 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class CommandNamesResource {
-	//private final static String fileName = "com/ur/urcap/examples/localizationswing/impl/i18n/commandnames/command_names";
-	//private final static String fileName = "/i18n/commandnames/command_names";
-	private final static String fileName = "i18n/commandnames/command_names";
-	private ResourceBundle resource;
+    //private final static String fileName = "com/ur/urcap/examples/localizationswing/impl/i18n/commandnames/command_names";
+    //private final static String fileName = "/i18n/commandnames/command_names";
+    private final static String fileName = "i18n/commandnames/command_names";
+    private ResourceBundle resource;
 
-	public CommandNamesResource(Locale locale) {
-		locale = locale.equals(LanguagePack.rootLanguageLocale) ? Locale.ROOT : locale;
-		resource = ResourceBundle.getBundle(fileName, locale, new UTF8Control());
-	}
+    public CommandNamesResource(Locale locale) {
+        locale = locale.equals(LanguagePack.rootLanguageLocale) ? Locale.ROOT : locale;
+        resource = ResourceBundle.getBundle(fileName, locale, new UTF8Control());
+    }
 
-	public String nodeName() {
-		return getStringByKey("NodeName");
-	}
+    public String nodeName() {
+        return getStringByKey("NodeName");
+    }
 
-	private String getStringByKey(String key) {
-		try {
-			return resource.getString(key);
-		} catch (Exception e) {
-			return "!"+key;
-		}
-	}
+    private String getStringByKey(String key) {
+        try {
+            return resource.getString(key);
+        } catch (Exception e) {
+            return "!" + key;
+        }
+    }
 }

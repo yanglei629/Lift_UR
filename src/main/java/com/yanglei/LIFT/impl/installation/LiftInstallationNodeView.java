@@ -12,6 +12,8 @@ import javax.swing.*;
 import javax.swing.JComboBox;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -70,6 +72,14 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
     private JLabel current_feedback_label;
     private JLabel temperature_feedback_label;
     private JLabel errorcode_feedback_label;
+    private JPanel connection_info_panel;
+    private JPanel virutual_limit_info_panel;
+    private JPanel lift_info_panel;
+    private JPanel servo_info_panel;
+    private JLabel logo;
+    private JLabel low_virtual_limit_label;
+    private JLabel high_virtual_limit_label;
+    private JPanel stroke_panel;
 
     public LiftInstallationNodeView(Style style) {
         this.style = style;
@@ -97,12 +107,36 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
 
     private void setUI() {
         // i18n
+        stroke_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), this.contribution.getTextResource().stroke(), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        connection_info_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), this.contribution.getTextResource().connectionInfo(), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        virutual_limit_info_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), this.contribution.getTextResource().virtualLimit(), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        lift_info_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), this.contribution.getTextResource().liftInfo(), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        servo_info_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), this.contribution.getTextResource().servoInfo(), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+
+
         ip_label.setText(this.contribution.getTextResource().ip());
+        port_label.setText(this.contribution.getTextResource().port());
+        stroke_label.setText(this.contribution.getTextResource().stroke());
+        connect_btn.setText(this.contribution.getTextResource().connect());
+        //reset_btn.setText(this.contribution.getTextResource().reset());
+        high_virtual_limit_checkbox.setText(this.contribution.getTextResource().highVirtualLimit());
+        low_virtual_limit_checkbox.setText(this.contribution.getTextResource().lowVirtualLimit());
+        high_virtual_limit_label.setText(this.contribution.getTextResource().highVirtualLimit());
+        low_virtual_limit_label.setText(this.contribution.getTextResource().lowVirtualLimit());
+        height_feedback_label.setText(this.contribution.getTextResource().currentPos());
+        speed_feedback_label.setText(this.contribution.getTextResource().currentSpeed());
+        status_feedback_label.setText(this.contribution.getTextResource().status());
+        current_feedback_label.setText(this.contribution.getTextResource().currentCurrent());
+        temperature_feedback_label.setText(this.contribution.getTextResource().currentTemperature());
+        errorcode_feedback_label.setText(this.contribution.getTextResource().errorCode());
 
         // set listener
         ip_field.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                if (contribution.isConnect()) {
+                    return;
+                }
                 KeyboardTextInput keyboardInput = contribution.getKeyboardFactory().createIPAddressKeyboardInput();
                 keyboardInput.setInitialValue(contribution.getIP());
                 keyboardInput.show(ip_field, new KeyboardInputCallback<String>() {
@@ -118,6 +152,9 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         port_field.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                if (contribution.isConnect()) {
+                    return;
+                }
                 Integer min = 0;
                 Integer max = 99999;
                 KeyboardNumberInput<Integer> keyboardInput = contribution.getKeyboardFactory().createIntegerKeypadInput();
@@ -157,21 +194,37 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
 
         stroke_box.removeAllItems();
         DefaultComboBoxModel model = new DefaultComboBoxModel();
-        model.addElement("500mm");
-        model.addElement("600mm");
+        model.addElement("500");
+        model.addElement("600");
         stroke_box.setModel(model);
+        stroke_box.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                Object selectedItem = stroke_box.getSelectedItem();
+                String select = (String) selectedItem;
+                System.out.println(select);
+                contribution.setStroke(Integer.valueOf(select));
+            }
+        });
 
         connect_btn.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
                 super.mouseClicked(mouseEvent);
-                contribution.connect();
+                if (contribution.getConnectionStatus()) {
+                    contribution.disConnect();
+                } else {
+                    contribution.connect();
+                }
             }
         });
 
         low_virtual_limit_field.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                if (contribution.isConnect()) {
+                    return;
+                }
                 KeyboardNumberInput<Integer> keyboardInput = contribution.getKeyboardFactory().createIntegerKeypadInput();
                 keyboardInput.setInitialValue(contribution.getLowVirtualLimit());
                 keyboardInput.show(low_virtual_limit_field, new KeyboardInputCallback<Integer>() {
@@ -187,8 +240,36 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         high_virtual_limit_field.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                if (contribution.isConnect()) {
+                    return;
+                }
                 KeyboardNumberInput<Integer> keyboardInput = contribution.getKeyboardFactory().createIntegerKeypadInput();
                 keyboardInput.setInitialValue(contribution.getHighVirtualLimit());
+                Integer min = contribution.getLowVirtualLimit();
+                Integer max = contribution.getStroke();
+                keyboardInput.setErrorValidator(new InputValidator<Integer>() {
+                    @Override
+                    public boolean isValid(Integer value) {
+                        if (value < min) {
+                            return false;
+                        }
+                        if (value > max) {
+                            return false;
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public String getMessage(Integer value) {
+                        if (value < min) {
+                            return "Illegal input";
+                        }
+                        if (value > max) {
+                            return "Illegal input";
+                        }
+                        return "ok";
+                    }
+                });
                 keyboardInput.show(high_virtual_limit_field, new KeyboardInputCallback<Integer>() {
                     @Override
                     public void onOk(Integer value) {
@@ -265,42 +346,22 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         controlBox.setVisible(false);
     }
 
-    public void setConnected() {
-        setConnectStatusLabel(this.contribution.getTextResource().connected());
-        modeBox.setVisible(true);
-        controlBox.setVisible(true);
-    }
-
-    public void setStopBtn(String stop) {
-        stopBtn.setText(stop);
-    }
-
-    public void setCancelStopBtn(String cancelStop) {
-        cancelStopBtn.setText(cancelStop);
-    }
-
-
-    /**
-     * lift status
-     */
-    public void setStatusText(String status) {
-        statusHeader.setText(status);
-    }
-
-    public void setCurrentPosLabel(String text) {
-        labelCurrentPos.setText(text);
-    }
-
-    public void setMovingStatus(String text) {
-        labelMovingStatus.setText(text);
-    }
-
-    public void setModeBox(Integer mode) {
-        if (mode == 10) {
-            modeComboBox.setSelectedIndex(0);
+    public void setConnected(boolean b) {
+        ip_field.enableInputMethods(!b);
+        ip_field.setFocusable(!b);
+        ip_field.setEditable(!b);
+        ip_field.setEnabled(!b);
+        port_field.setEnabled(!b);
+        if (b) {
+            connect_btn.setText(this.contribution.getTextResource().disconnect());
         } else {
-            modeComboBox.setSelectedIndex(1);
+            connect_btn.setText(this.contribution.getTextResource().connect());
         }
+        stroke_box.setEnabled(!b);
+        high_virtual_limit_field.setEnabled(!b);
+        low_virtual_limit_field.setEnabled(!b);
+        high_virtual_limit_checkbox.setEnabled(!b);
+        low_virtual_limit_checkbox.setEnabled(!b);
     }
 
     {
@@ -323,9 +384,9 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         root.setAlignmentX(1.0f);
         root.setAlignmentY(1.0f);
         root.setBackground(new Color(-1));
-        final JPanel panel1 = new JPanel();
-        panel1.setLayout(new GridBagLayout());
-        panel1.setBackground(new Color(-1));
+        connection_info_panel = new JPanel();
+        connection_info_panel.setLayout(new GridBagLayout());
+        connection_info_panel.setBackground(new Color(-1));
         GridBagConstraints gbc;
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -333,16 +394,16 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        root.add(panel1, gbc);
-        panel1.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "连接信息", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
-        final JPanel panel2 = new JPanel();
-        panel2.setLayout(new GridBagLayout());
+        root.add(connection_info_panel, gbc);
+        connection_info_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "连接信息", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.VERTICAL;
-        panel1.add(panel2, gbc);
+        connection_info_panel.add(panel1, gbc);
         ip_label = new JLabel();
         ip_label.setMaximumSize(new Dimension(40, 30));
         ip_label.setMinimumSize(new Dimension(40, 30));
@@ -352,34 +413,34 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel2.add(ip_label, gbc);
+        panel1.add(ip_label, gbc);
         ip_field = new JTextField();
-        ip_field.setMaximumSize(new Dimension(80, 30));
-        ip_field.setMinimumSize(new Dimension(80, 30));
-        ip_field.setPreferredSize(new Dimension(120, 30));
+        ip_field.setMaximumSize(new Dimension(150, 30));
+        ip_field.setMinimumSize(new Dimension(150, 30));
+        ip_field.setPreferredSize(new Dimension(150, 30));
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel2.add(ip_field, gbc);
+        panel1.add(ip_field, gbc);
         final JPanel spacer1 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel2.add(spacer1, gbc);
-        final JPanel panel3 = new JPanel();
-        panel3.setLayout(new GridBagLayout());
+        panel1.add(spacer1, gbc);
+        final JPanel panel2 = new JPanel();
+        panel2.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.VERTICAL;
-        panel1.add(panel3, gbc);
+        connection_info_panel.add(panel2, gbc);
         port_label = new JLabel();
         port_label.setMaximumSize(new Dimension(40, 30));
         port_label.setMinimumSize(new Dimension(40, 30));
@@ -389,7 +450,7 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel3.add(port_label, gbc);
+        panel2.add(port_label, gbc);
         port_field = new JTextField();
         port_field.setMaximumSize(new Dimension(100, 30));
         port_field.setMinimumSize(new Dimension(100, 30));
@@ -399,254 +460,246 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel3.add(port_field, gbc);
-        final JPanel panel4 = new JPanel();
-        panel4.setLayout(new GridBagLayout());
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 1;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.VERTICAL;
-        panel1.add(panel4, gbc);
-        stroke_label = new JLabel();
-        stroke_label.setMaximumSize(new Dimension(50, 30));
-        stroke_label.setMinimumSize(new Dimension(50, 30));
-        stroke_label.setText("Stroke:");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        panel4.add(stroke_label, gbc);
-        stroke_box = new JComboBox();
-        stroke_box.setMaximumSize(new Dimension(100, 30));
-        stroke_box.setMinimumSize(new Dimension(100, 30));
-        final DefaultComboBoxModel defaultComboBoxModel1 = new DefaultComboBoxModel();
-        defaultComboBoxModel1.addElement("500mm");
-        defaultComboBoxModel1.addElement("600mm");
-        defaultComboBoxModel1.addElement("700mm");
-        stroke_box.setModel(defaultComboBoxModel1);
-        stroke_box.setPreferredSize(new Dimension(100, 30));
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel4.add(stroke_box, gbc);
-        final JPanel panel5 = new JPanel();
-        panel5.setLayout(new GridBagLayout());
+        panel2.add(port_field, gbc);
+        final JPanel panel3 = new JPanel();
+        panel3.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 4;
         gbc.gridy = 1;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.VERTICAL;
-        panel1.add(panel5, gbc);
+        connection_info_panel.add(panel3, gbc);
         connect_btn = new JButton();
-        connect_btn.setMaximumSize(new Dimension(100, 30));
-        connect_btn.setMinimumSize(new Dimension(100, 30));
-        connect_btn.setPreferredSize(new Dimension(100, 30));
+        connect_btn.setMaximumSize(new Dimension(150, 30));
+        connect_btn.setMinimumSize(new Dimension(150, 30));
+        connect_btn.setPreferredSize(new Dimension(150, 30));
         connect_btn.setText("连接");
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel5.add(connect_btn, gbc);
+        panel3.add(connect_btn, gbc);
         final JPanel spacer2 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 3;
-        panel5.add(spacer2, gbc);
+        panel3.add(spacer2, gbc);
         connect_status_label = new JLabel();
         connect_status_label.setMaximumSize(new Dimension(120, 30));
         connect_status_label.setMinimumSize(new Dimension(120, 30));
         connect_status_label.setPreferredSize(new Dimension(120, 30));
         connect_status_label.setText("未连接");
         gbc = new GridBagConstraints();
-        gbc.gridx = 5;
+        gbc.gridx = 3;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel5.add(connect_status_label, gbc);
+        panel3.add(connect_status_label, gbc);
         final JPanel spacer3 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel5.add(spacer3, gbc);
-        reset_btn = new JButton();
-        reset_btn.setMaximumSize(new Dimension(100, 30));
-        reset_btn.setMinimumSize(new Dimension(100, 30));
-        reset_btn.setPreferredSize(new Dimension(100, 30));
-        reset_btn.setText("复位");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel5.add(reset_btn, gbc);
+        panel3.add(spacer3, gbc);
         final JPanel spacer4 = new JPanel();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 4;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.ipadx = 5;
-        panel5.add(spacer4, gbc);
-        final JPanel spacer5 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel1.add(spacer5, gbc);
-        final JPanel spacer6 = new JPanel();
+        connection_info_panel.add(spacer4, gbc);
+        final JPanel spacer5 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 5;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 1;
-        panel1.add(spacer6, gbc);
-        final JPanel spacer7 = new JPanel();
+        connection_info_panel.add(spacer5, gbc);
+        final JPanel spacer6 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 5;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 1;
-        panel1.add(spacer7, gbc);
-        final JPanel panel6 = new JPanel();
-        panel6.setLayout(new GridBagLayout());
+        connection_info_panel.add(spacer6, gbc);
+        virutual_limit_info_panel = new JPanel();
+        virutual_limit_info_panel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        root.add(panel6, gbc);
-        panel6.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "虚拟限位", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
-        final JPanel panel7 = new JPanel();
-        panel7.setLayout(new GridBagLayout());
+        root.add(virutual_limit_info_panel, gbc);
+        virutual_limit_info_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "虚拟限位", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        final JPanel panel4 = new JPanel();
+        panel4.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        panel6.add(panel7, gbc);
+        virutual_limit_info_panel.add(panel4, gbc);
         low_virtual_limit_checkbox = new JCheckBox();
         low_virtual_limit_checkbox.setMaximumSize(new Dimension(150, 30));
         low_virtual_limit_checkbox.setMinimumSize(new Dimension(150, 30));
         low_virtual_limit_checkbox.setPreferredSize(new Dimension(150, 30));
         low_virtual_limit_checkbox.setText("虚拟最低限位");
+        low_virtual_limit_checkbox.setVisible(false);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel7.add(low_virtual_limit_checkbox, gbc);
-        final JPanel spacer8 = new JPanel();
+        panel4.add(low_virtual_limit_checkbox, gbc);
+        final JPanel spacer7 = new JPanel();
         gbc = new GridBagConstraints();
-        gbc.gridx = 1;
+        gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel7.add(spacer8, gbc);
+        panel4.add(spacer7, gbc);
         low_virtual_limit_field = new JTextField();
         low_virtual_limit_field.setMaximumSize(new Dimension(80, 30));
         low_virtual_limit_field.setMinimumSize(new Dimension(80, 30));
         low_virtual_limit_field.setPreferredSize(new Dimension(80, 30));
         gbc = new GridBagConstraints();
-        gbc.gridx = 2;
+        gbc.gridx = 3;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel7.add(low_virtual_limit_field, gbc);
-        final JPanel spacer9 = new JPanel();
+        panel4.add(low_virtual_limit_field, gbc);
+        final JLabel label1 = new JLabel();
+        label1.setMaximumSize(new Dimension(60, 30));
+        label1.setMinimumSize(new Dimension(60, 30));
+        label1.setPreferredSize(new Dimension(60, 30));
+        label1.setText("mm");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel4.add(label1, gbc);
+        low_virtual_limit_label = new JLabel();
+        low_virtual_limit_label.setMaximumSize(new Dimension(150, 30));
+        low_virtual_limit_label.setMinimumSize(new Dimension(150, 30));
+        low_virtual_limit_label.setPreferredSize(new Dimension(150, 30));
+        low_virtual_limit_label.setText("虚拟最低限位");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel4.add(low_virtual_limit_label, gbc);
+        final JPanel spacer8 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.VERTICAL;
-        panel6.add(spacer9, gbc);
-        final JPanel panel8 = new JPanel();
-        panel8.setLayout(new GridBagLayout());
+        virutual_limit_info_panel.add(spacer8, gbc);
+        final JPanel panel5 = new JPanel();
+        panel5.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
-        panel6.add(panel8, gbc);
+        virutual_limit_info_panel.add(panel5, gbc);
         high_virtual_limit_checkbox = new JCheckBox();
         high_virtual_limit_checkbox.setMaximumSize(new Dimension(150, 30));
         high_virtual_limit_checkbox.setMinimumSize(new Dimension(150, 30));
         high_virtual_limit_checkbox.setPreferredSize(new Dimension(150, 30));
         high_virtual_limit_checkbox.setText("虚拟最高限位");
+        high_virtual_limit_checkbox.setVisible(false);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel8.add(high_virtual_limit_checkbox, gbc);
-        final JPanel spacer10 = new JPanel();
+        panel5.add(high_virtual_limit_checkbox, gbc);
+        final JPanel spacer9 = new JPanel();
         gbc = new GridBagConstraints();
-        gbc.gridx = 1;
+        gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel8.add(spacer10, gbc);
+        panel5.add(spacer9, gbc);
         high_virtual_limit_field = new JTextField();
         high_virtual_limit_field.setMaximumSize(new Dimension(80, 30));
         high_virtual_limit_field.setMinimumSize(new Dimension(80, 30));
         high_virtual_limit_field.setPreferredSize(new Dimension(80, 30));
         gbc = new GridBagConstraints();
-        gbc.gridx = 2;
+        gbc.gridx = 3;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel8.add(high_virtual_limit_field, gbc);
-        final JPanel spacer11 = new JPanel();
+        panel5.add(high_virtual_limit_field, gbc);
+        final JPanel spacer10 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 4;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 1;
-        panel8.add(spacer11, gbc);
-        final JPanel spacer12 = new JPanel();
+        panel5.add(spacer10, gbc);
+        final JLabel label2 = new JLabel();
+        label2.setMaximumSize(new Dimension(60, 30));
+        label2.setMinimumSize(new Dimension(60, 30));
+        label2.setPreferredSize(new Dimension(60, 30));
+        label2.setText("mm");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel5.add(label2, gbc);
+        high_virtual_limit_label = new JLabel();
+        high_virtual_limit_label.setMaximumSize(new Dimension(150, 30));
+        high_virtual_limit_label.setMinimumSize(new Dimension(150, 30));
+        high_virtual_limit_label.setPreferredSize(new Dimension(150, 30));
+        high_virtual_limit_label.setText("虚拟最高限位");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel5.add(high_virtual_limit_label, gbc);
+        final JPanel spacer11 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 1;
-        panel6.add(spacer12, gbc);
-        final JPanel panel9 = new JPanel();
-        panel9.setLayout(new GridBagLayout());
+        virutual_limit_info_panel.add(spacer11, gbc);
+        lift_info_panel = new JPanel();
+        lift_info_panel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        root.add(panel9, gbc);
-        panel9.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "升降柱信息", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
-        final JPanel panel10 = new JPanel();
-        panel10.setLayout(new GridBagLayout());
+        root.add(lift_info_panel, gbc);
+        lift_info_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "升降柱信息", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        final JPanel panel6 = new JPanel();
+        panel6.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        panel9.add(panel10, gbc);
+        lift_info_panel.add(panel6, gbc);
         height_feedback_label = new JLabel();
-        height_feedback_label.setMaximumSize(new Dimension(80, 30));
-        height_feedback_label.setMinimumSize(new Dimension(80, 30));
-        height_feedback_label.setPreferredSize(new Dimension(80, 30));
+        height_feedback_label.setMaximumSize(new Dimension(160, 30));
+        height_feedback_label.setMinimumSize(new Dimension(160, 30));
+        height_feedback_label.setPreferredSize(new Dimension(160, 30));
         height_feedback_label.setText("当前高度");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel10.add(height_feedback_label, gbc);
-        final JPanel spacer13 = new JPanel();
+        panel6.add(height_feedback_label, gbc);
+        final JPanel spacer12 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel10.add(spacer13, gbc);
+        panel6.add(spacer12, gbc);
         height_feedback_field = new JLabel();
         height_feedback_field.setMaximumSize(new Dimension(100, 30));
         height_feedback_field.setMinimumSize(new Dimension(100, 30));
@@ -656,37 +709,37 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel10.add(height_feedback_field, gbc);
-        final JPanel spacer14 = new JPanel();
+        panel6.add(height_feedback_field, gbc);
+        final JPanel spacer13 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.VERTICAL;
-        panel9.add(spacer14, gbc);
-        final JPanel panel11 = new JPanel();
-        panel11.setLayout(new GridBagLayout());
+        lift_info_panel.add(spacer13, gbc);
+        final JPanel panel7 = new JPanel();
+        panel7.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
-        panel9.add(panel11, gbc);
+        lift_info_panel.add(panel7, gbc);
         speed_feedback_label = new JLabel();
-        speed_feedback_label.setMaximumSize(new Dimension(80, 30));
-        speed_feedback_label.setMinimumSize(new Dimension(80, 30));
-        speed_feedback_label.setPreferredSize(new Dimension(80, 30));
+        speed_feedback_label.setMaximumSize(new Dimension(160, 30));
+        speed_feedback_label.setMinimumSize(new Dimension(160, 30));
+        speed_feedback_label.setPreferredSize(new Dimension(160, 30));
         speed_feedback_label.setText("当前速度");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel11.add(speed_feedback_label, gbc);
-        final JPanel spacer15 = new JPanel();
+        panel7.add(speed_feedback_label, gbc);
+        final JPanel spacer14 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel11.add(spacer15, gbc);
+        panel7.add(spacer14, gbc);
         speed_feedback_field = new JLabel();
         speed_feedback_field.setMaximumSize(new Dimension(100, 30));
         speed_feedback_field.setMinimumSize(new Dimension(100, 30));
@@ -696,37 +749,37 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel11.add(speed_feedback_field, gbc);
-        final JPanel spacer16 = new JPanel();
+        panel7.add(speed_feedback_field, gbc);
+        final JPanel spacer15 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.fill = GridBagConstraints.VERTICAL;
-        panel9.add(spacer16, gbc);
-        final JPanel panel12 = new JPanel();
-        panel12.setLayout(new GridBagLayout());
+        lift_info_panel.add(spacer15, gbc);
+        final JPanel panel8 = new JPanel();
+        panel8.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.fill = GridBagConstraints.BOTH;
-        panel9.add(panel12, gbc);
+        lift_info_panel.add(panel8, gbc);
         status_feedback_label = new JLabel();
-        status_feedback_label.setMaximumSize(new Dimension(80, 30));
-        status_feedback_label.setMinimumSize(new Dimension(80, 30));
-        status_feedback_label.setPreferredSize(new Dimension(80, 30));
+        status_feedback_label.setMaximumSize(new Dimension(160, 30));
+        status_feedback_label.setMinimumSize(new Dimension(160, 30));
+        status_feedback_label.setPreferredSize(new Dimension(160, 30));
         status_feedback_label.setText("当前状态");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel12.add(status_feedback_label, gbc);
-        final JPanel spacer17 = new JPanel();
+        panel8.add(status_feedback_label, gbc);
+        final JPanel spacer16 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel12.add(spacer17, gbc);
+        panel8.add(spacer16, gbc);
         status_feedback_field = new JLabel();
         status_feedback_field.setMaximumSize(new Dimension(100, 30));
         status_feedback_field.setMinimumSize(new Dimension(100, 30));
@@ -736,54 +789,54 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel12.add(status_feedback_field, gbc);
-        final JPanel spacer18 = new JPanel();
+        panel8.add(status_feedback_field, gbc);
+        final JPanel spacer17 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 1;
-        panel9.add(spacer18, gbc);
-        final JPanel spacer19 = new JPanel();
+        lift_info_panel.add(spacer17, gbc);
+        final JPanel spacer18 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 1;
-        panel9.add(spacer19, gbc);
-        final JPanel panel13 = new JPanel();
-        panel13.setLayout(new GridBagLayout());
+        lift_info_panel.add(spacer18, gbc);
+        servo_info_panel = new JPanel();
+        servo_info_panel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        root.add(panel13, gbc);
-        panel13.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "伺服信息", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
-        final JPanel panel14 = new JPanel();
-        panel14.setLayout(new GridBagLayout());
+        root.add(servo_info_panel, gbc);
+        servo_info_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "伺服信息", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        final JPanel panel9 = new JPanel();
+        panel9.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        panel13.add(panel14, gbc);
+        servo_info_panel.add(panel9, gbc);
         current_feedback_label = new JLabel();
-        current_feedback_label.setMaximumSize(new Dimension(80, 30));
-        current_feedback_label.setMinimumSize(new Dimension(80, 30));
-        current_feedback_label.setPreferredSize(new Dimension(80, 30));
+        current_feedback_label.setMaximumSize(new Dimension(160, 30));
+        current_feedback_label.setMinimumSize(new Dimension(160, 30));
+        current_feedback_label.setPreferredSize(new Dimension(160, 30));
         current_feedback_label.setText("当前电流");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel14.add(current_feedback_label, gbc);
-        final JPanel spacer20 = new JPanel();
+        panel9.add(current_feedback_label, gbc);
+        final JPanel spacer19 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel14.add(spacer20, gbc);
+        panel9.add(spacer19, gbc);
         current_feedback_field = new JLabel();
         current_feedback_field.setMaximumSize(new Dimension(100, 30));
         current_feedback_field.setMinimumSize(new Dimension(100, 30));
@@ -793,37 +846,37 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel14.add(current_feedback_field, gbc);
-        final JPanel spacer21 = new JPanel();
+        panel9.add(current_feedback_field, gbc);
+        final JPanel spacer20 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.VERTICAL;
-        panel13.add(spacer21, gbc);
-        final JPanel panel15 = new JPanel();
-        panel15.setLayout(new GridBagLayout());
+        servo_info_panel.add(spacer20, gbc);
+        final JPanel panel10 = new JPanel();
+        panel10.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
-        panel13.add(panel15, gbc);
+        servo_info_panel.add(panel10, gbc);
         temperature_feedback_label = new JLabel();
-        temperature_feedback_label.setMaximumSize(new Dimension(80, 30));
-        temperature_feedback_label.setMinimumSize(new Dimension(80, 30));
-        temperature_feedback_label.setPreferredSize(new Dimension(80, 30));
+        temperature_feedback_label.setMaximumSize(new Dimension(160, 30));
+        temperature_feedback_label.setMinimumSize(new Dimension(160, 30));
+        temperature_feedback_label.setPreferredSize(new Dimension(160, 30));
         temperature_feedback_label.setText("当前温度");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel15.add(temperature_feedback_label, gbc);
-        final JPanel spacer22 = new JPanel();
+        panel10.add(temperature_feedback_label, gbc);
+        final JPanel spacer21 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel15.add(spacer22, gbc);
+        panel10.add(spacer21, gbc);
         temperature_feedback_field = new JLabel();
         temperature_feedback_field.setMaximumSize(new Dimension(100, 30));
         temperature_feedback_field.setMinimumSize(new Dimension(100, 30));
@@ -833,37 +886,37 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel15.add(temperature_feedback_field, gbc);
-        final JPanel spacer23 = new JPanel();
+        panel10.add(temperature_feedback_field, gbc);
+        final JPanel spacer22 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.fill = GridBagConstraints.VERTICAL;
-        panel13.add(spacer23, gbc);
-        final JPanel panel16 = new JPanel();
-        panel16.setLayout(new GridBagLayout());
+        servo_info_panel.add(spacer22, gbc);
+        final JPanel panel11 = new JPanel();
+        panel11.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.fill = GridBagConstraints.BOTH;
-        panel13.add(panel16, gbc);
+        servo_info_panel.add(panel11, gbc);
         errorcode_feedback_label = new JLabel();
-        errorcode_feedback_label.setMaximumSize(new Dimension(80, 30));
-        errorcode_feedback_label.setMinimumSize(new Dimension(80, 30));
-        errorcode_feedback_label.setPreferredSize(new Dimension(80, 30));
+        errorcode_feedback_label.setMaximumSize(new Dimension(160, 30));
+        errorcode_feedback_label.setMinimumSize(new Dimension(160, 30));
+        errorcode_feedback_label.setPreferredSize(new Dimension(160, 30));
         errorcode_feedback_label.setText("故障码");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel16.add(errorcode_feedback_label, gbc);
-        final JPanel spacer24 = new JPanel();
+        panel11.add(errorcode_feedback_label, gbc);
+        final JPanel spacer23 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.ipadx = 5;
-        panel16.add(spacer24, gbc);
+        panel11.add(spacer23, gbc);
         errorcode_feedback_field = new JLabel();
         errorcode_feedback_field.setMaximumSize(new Dimension(100, 30));
         errorcode_feedback_field.setMinimumSize(new Dimension(100, 30));
@@ -873,25 +926,33 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        panel16.add(errorcode_feedback_field, gbc);
-        final JPanel spacer25 = new JPanel();
+        panel11.add(errorcode_feedback_field, gbc);
+        final JPanel spacer24 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 1;
-        panel13.add(spacer25, gbc);
-        final JPanel spacer26 = new JPanel();
+        servo_info_panel.add(spacer24, gbc);
+        final JPanel spacer25 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 1;
-        panel13.add(spacer26, gbc);
+        servo_info_panel.add(spacer25, gbc);
+        final JPanel spacer26 = new JPanel();
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.ipady = 3;
+        root.add(spacer26, gbc);
         final JPanel spacer27 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 3;
@@ -899,27 +960,93 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         final JPanel spacer28 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.ipady = 3;
         root.add(spacer28, gbc);
+        logo = new JLabel();
+        logo.setIcon(new ImageIcon(getClass().getResource("/images/logo.png")));
+        logo.setText("");
+        logo.setVisible(false);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 7;
+        gbc.anchor = GridBagConstraints.SOUTHEAST;
+        root.add(logo, gbc);
+        stroke_panel = new JPanel();
+        stroke_panel.setLayout(new GridBagLayout());
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        root.add(stroke_panel, gbc);
+        stroke_panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "行程", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        final JPanel panel12 = new JPanel();
+        panel12.setLayout(new GridBagLayout());
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        stroke_panel.add(panel12, gbc);
+        stroke_label = new JLabel();
+        stroke_label.setMaximumSize(new Dimension(100, 30));
+        stroke_label.setMinimumSize(new Dimension(100, 30));
+        stroke_label.setPreferredSize(new Dimension(100, 30));
+        stroke_label.setText("Stroke:");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel12.add(stroke_label, gbc);
+        stroke_box = new JComboBox();
+        stroke_box.setMaximumSize(new Dimension(100, 30));
+        stroke_box.setMinimumSize(new Dimension(100, 30));
+        final DefaultComboBoxModel defaultComboBoxModel1 = new DefaultComboBoxModel();
+        defaultComboBoxModel1.addElement("500");
+        defaultComboBoxModel1.addElement("600");
+        defaultComboBoxModel1.addElement("700");
+        stroke_box.setModel(defaultComboBoxModel1);
+        stroke_box.setPreferredSize(new Dimension(100, 30));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel12.add(stroke_box, gbc);
         final JPanel spacer29 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.VERTICAL;
-        gbc.ipady = 3;
-        root.add(spacer29, gbc);
-        final JLabel label1 = new JLabel();
-        label1.setIcon(new ImageIcon(getClass().getResource("/images/logo.png")));
-        label1.setText("");
+        gbc.ipady = 1;
+        panel12.add(spacer29, gbc);
+        final JPanel spacer30 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = 6;
-        gbc.anchor = GridBagConstraints.SOUTHEAST;
-        root.add(label1, gbc);
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel12.add(spacer30, gbc);
+        final JLabel label3 = new JLabel();
+        label3.setMaximumSize(new Dimension(60, 30));
+        label3.setMinimumSize(new Dimension(60, 30));
+        label3.setPreferredSize(new Dimension(60, 30));
+        label3.setText("mm");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel12.add(label3, gbc);
+        final JPanel spacer31 = new JPanel();
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.ipady = 1;
+        stroke_panel.add(spacer31, gbc);
     }
 
     /**
@@ -941,13 +1068,18 @@ public class LiftInstallationNodeView implements SwingInstallationNodeView<LiftI
         this.high_virtual_limit_field.setText(String.valueOf(highVirtualLimit));
     }
 
-    public void refreshState(boolean connectionStatus, Integer height, Integer speed, Integer status, Integer current, Integer temperature, Integer errorCode) {
+    public void refreshState(boolean connectionStatus, Double height, Double speed, Double status, Double current, Double temperature, Double errorCode) {
         if (connectionStatus) {
             connect_status_label.setText(contribution.getTextResource().connected());
 
             height_feedback_field.setText(height + "mm");
             speed_feedback_field.setText(speed + "mm/s");
-            status_feedback_field.setText(String.valueOf(status));
+            //status_feedback_field.setText(String.valueOf(status));
+            if (status == 1) {
+                status_feedback_field.setText(contribution.getTextResource().moving());
+            } else {
+                status_feedback_field.setText(contribution.getTextResource().stop());
+            }
 
             current_feedback_field.setText(current + "A");
             temperature_feedback_field.setText(String.valueOf(temperature));

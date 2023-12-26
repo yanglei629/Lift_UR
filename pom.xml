@@ -7,7 +7,7 @@
 
     <groupId>com.yanglei</groupId>
     <artifactId>LIFT</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>LIFT</name>
     <packaging>bundle</packaging>
 
@@ -18,11 +18,21 @@
         <!--         that comes along with your URCap                           -->
         <!--********************************************************************-->
         <!--******************* BEGINNING OF URCAP META DATA *******************-->
-        <urcap.symbolicname>com.backyard.DL1200LIFT</urcap.symbolicname>
-        <urcap.vendor>Backyard shanghai Inc.</urcap.vendor>
-        <urcap.contactAddress>No.89 Hu Guang road, Minhang district, Shanghai</urcap.contactAddress>
-        <urcap.copyright>Copyright (C) 2017-2023 Backyard All Rights Reserved</urcap.copyright>
-        <urcap.description>Backyard Electrical Lift</urcap.description>
+        <!--<urcap.symbolicname>com.backyard.DL1200LIFT</urcap.symbolicname>-->
+        <urcap.symbolicname></urcap.symbolicname>
+
+        <!--<urcap.vendor>Backyard shanghai Inc.</urcap.vendor>-->
+        <urcap.vendor></urcap.vendor>
+
+        <!--<urcap.contactAddress>No.89 Hu Guang road, Minhang district, Shanghai</urcap.contactAddress>-->
+        <urcap.contactAddress></urcap.contactAddress>
+
+        <!--<urcap.copyright>Copyright (C) 2017-2023 Backyard All Rights Reserved</urcap.copyright>-->
+        <urcap.copyright></urcap.copyright>
+
+        <!--<urcap.description>Backyard Electrical Lift</urcap.description>-->
+        <urcap.description></urcap.description>
+
         <urcap.licenseType>License type</urcap.licenseType>
         <!--********************** END OF URCAP META DATA **********************-->
         <!--********************************************************************-->
